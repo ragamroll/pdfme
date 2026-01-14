@@ -3,6 +3,7 @@ import PDFName from '../objects/PDFName';
 import PDFRef from '../objects/PDFRef';
 import PDFContext from '../PDFContext';
 import PDFPageTree from './PDFPageTree';
+import PDFDPart from './PDFDPart';
 import { PDFAcroForm } from '../acroform';
 import ViewerPreferences from '../interactive/ViewerPreferences';
 
@@ -58,6 +59,32 @@ class PDFCatalog extends PDFDict {
       this.set(PDFName.of('ViewerPreferences'), viewerPrefsRef);
     }
     return viewerPrefs;
+  }
+
+  DPart(): PDFDPart | undefined {
+    return this.lookupMaybe(PDFName.of('DPart'), PDFDict) as PDFDPart | undefined;
+  }
+
+  getDPart(): PDFDPart | undefined {
+    const dict = this.DPart();
+    if (!dict) return undefined;
+    return dict as PDFDPart;
+  }
+
+  getOrCreateDPart(): PDFDPart {
+    let dpart = this.getDPart();
+    if (!dpart) {
+      dpart = PDFDPart.withContext(this.context);
+      const dpartRef = this.context.register(dpart);
+      this.set(PDFName.of('DPart'), dpartRef);
+    }
+    return dpart;
+  }
+
+  setXMP(xmp: string): void {
+    const xmpStream = this.context.stream(xmp);
+    const xmpRef = this.context.register(xmpStream);
+    this.set(PDFName.of('Metadata'), xmpRef);
   }
 
   /**

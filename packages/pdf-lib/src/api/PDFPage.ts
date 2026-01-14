@@ -44,6 +44,7 @@ import {
   PDFRef,
   PDFDict,
   PDFArray,
+  PDFDPart,
 } from '../core';
 import {
   assertEachIs,
@@ -254,6 +255,17 @@ export default class PDFPage {
   setHeight(height: number): void {
     assertIs(height, 'height', ['number']);
     this.setSize(this.getSize().width, height);
+  }
+
+  /**
+   * Set the DPart of this page for PDF/VT support. The DPart references
+   * the document part to which this page belongs.
+   *
+   * @param dpart The DPart dictionary for this page.
+   */
+  setDPart(dpart: PDFDPart): void {
+    assertIs(dpart, 'dpart', [[PDFDPart, 'PDFDPart']]);
+    this.node.set(PDFName.of('DPart'), dpart);
   }
 
   /**

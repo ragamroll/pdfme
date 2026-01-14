@@ -12,6 +12,16 @@ For using schemas other than the Text schema, please refer to the following docu
 
 :::
 
+### PDF/VT (Variable Transactional Printing)
+
+- **Document Structure**: DPart hierarchies for organizing variable content
+- **XMP Metadata**: PDF/VT namespace with version information
+- **Output Intents**: Color management for professional printing
+- **Record-Aware Generation**: Automatic metadata mapping from input data
+- **Standards Compliance**: ISO 16612-2 PDF/VT-1 specification
+
+Details: [PDF/VT Support](/docs/pdf-vt)
+
 
 ### Text (text)
 

@@ -1,5 +1,5 @@
 import * as pdfLib from '@pdfme/pdf-lib';
-import type { GenerateProps, Schema, PDFRenderProps, Template } from '@pdfme/common';
+import type { GenerateProps, Schema, PDFRenderProps, Template, DPartOptions } from '@pdfme/common';
 import {
   checkGenerateProps,
   getDynamicTemplate,
@@ -34,10 +34,38 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
 
   const { pdfDoc, renderObj } = await preprocessing({ template, userPlugins });
 
+  // PDF/VT setup
+  let dpartRoot: pdfLib.PDFDPart | undefined;
+  const dpartOptions = template.dpartOptions;
+  if (dpartOptions?.enabled) {
+    dpartRoot = pdfDoc.catalog.getOrCreateDPart();
+    // Set XMP metadata for PDF/VT
+    const xmp = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="" xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/">
+      <pdfvt:version>${dpartOptions.version}</pdfvt:version>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+    pdfDoc.setXMP(xmp);
+    // Set Output Intent
+    if (dpartOptions.outputIntent) {
+      pdfDoc.setOutputIntent({
+        subtype: 'GTS_PDFX',
+        outputCondition: dpartOptions.outputIntent.profileName,
+        outputConditionIdentifier: dpartOptions.outputIntent.profileName.replace(/\s+/g, ''),
+        registryName: dpartOptions.outputIntent.registryName,
+      });
+    }
+  }
+
   const _cache = new Map<string, unknown>();
 
   for (let i = 0; i < inputs.length; i += 1) {
     const input = inputs[i];
+    const pagesForInput: pdfLib.PDFPage[] = [];
 
     // Get the dynamic template with proper typing
     const dynamicTemplate: Template = await getDynamicTemplate({
@@ -82,6 +110,7 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
         basePage instanceof pdfLib.PDFEmbeddedPage ? pt2mm(embedPdfBox.mediaBox.y) : 0;
 
       const page = insertPage({ basePage, embedPdfBox, pdfDoc });
+      pagesForInput.push(page);
 
       if (isBlankPdf(basePdf) && basePdf.staticSchema) {
         for (let k = 0; k < basePdf.staticSchema.length; k += 1) {
@@ -155,6 +184,24 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
           _cache,
         };
         await render(renderProps);
+      }
+    }
+
+    // PDF/VT: Create DPart node for this input
+    if (dpartRoot && dpartOptions) {
+      const dpartNode = pdfLib.PDFDPart.withContext(pdfDoc.context);
+      // Set metadata based on mapping
+      const metadata = pdfDoc.context.obj({});
+      for (const [key, field] of Object.entries(dpartOptions.mapping)) {
+        if (input[field]) {
+          metadata.set(pdfLib.PDFName.of(key), pdfLib.PDFString.of(String(input[field])));
+        }
+      }
+      dpartNode.setMetadata(metadata);
+      dpartRoot.addChild(dpartNode);
+      // Set DPart on each page for this input
+      for (const page of pagesForInput) {
+        page.setDPart(dpartNode);
       }
     }
   }
