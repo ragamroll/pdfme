@@ -1,0 +1,72 @@
+[
+  {
+    "id": "rec-1",
+    "name": "Alice Johnson",
+    "note": "Welcome Alice",
+    "email": "alice@example.com",
+    "amount": "$1,250.00"
+  },
+  {
+    "id": "rec-2",
+    "name": "Bob Smith",
+    "note": "Special offer for Bob",
+    "email": "bob@example.com",
+    "amount": "$2,500.00"
+  },
+  {
+    "id": "rec-3",
+    "name": "Carol Davis",
+    "note": "Hello Carol",
+    "email": "carol@example.com",
+    "amount": "$875.50"
+  },
+  {
+    "id": "rec-4",
+    "name": "Dan Wilson",
+    "note": "Offer for Dan",
+    "email": "dan@example.com",
+    "amount": "$3,100.00"
+  },
+  {
+    "id": "rec-5",
+    "name": "Emma Brown",
+    "note": "Personalized offer for Emma",
+    "email": "emma@example.com",
+    "amount": "$1,950.00"
+  },
+  {
+    "id": "rec-6",
+    "name": "Frank Miller",
+    "note": "VDP sample for Frank",
+    "email": "frank@example.com",
+    "amount": "$4,200.00"
+  },
+  {
+    "id": "rec-7",
+    "name": "Grace Lee",
+    "note": "Premium offer for Grace",
+    "email": "grace@example.com",
+    "amount": "$2,750.00"
+  },
+  {
+    "id": "rec-8",
+    "name": "Henry Taylor",
+    "note": "Invitation for Henry",
+    "email": "henry@example.com",
+    "amount": "$1,600.00"
+  },
+  {
+    "id": "rec-9",
+    "name": "Iris Martinez",
+    "note": "VDP sample for Iris",
+    "email": "iris@example.com",
+    "amount": "$3,450.00"
+  },
+  {
+    "id": "rec-10",
+    "name": "Jack Anderson",
+    "note": "Special notice for Jack",
+    "email": "jack@example.com",
+    "amount": "$2,100.00"
+  }
+]
