@@ -226,7 +226,6 @@ export const Template = z
     basePdf: BasePdf,
     pdfmeVersion: z.string().optional(),
     dpartOptions: DPartOptions.optional(),
-    vt: TemplateVTConfig.optional(),
   })
   .passthrough();
 

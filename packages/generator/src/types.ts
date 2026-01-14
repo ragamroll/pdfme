@@ -1,5 +1,3 @@
-import type { TemplateVTConfig, RecordDPartInfo } from '@pdfme/common';
-
 export type EmbedPdfBox = {
   mediaBox: { x: number; y: number; width: number; height: number };
   bleedBox: { x: number; y: number; width: number; height: number };
@@ -19,7 +17,7 @@ export interface GeneratorVTOptions {
   /**
    * VT configuration from the template.
    */
-  vtConfig?: TemplateVTConfig;
+  vtConfig?: any;
 }
 
 /**

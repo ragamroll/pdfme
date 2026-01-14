@@ -1,4 +1,5 @@
 import PDFDict, { DictMap } from '../objects/PDFDict';
+import PDFArray from '../objects/PDFArray';
 import PDFName from '../objects/PDFName';
 import PDFRef from '../objects/PDFRef';
 import PDFContext from '../PDFContext';
@@ -58,6 +59,38 @@ class PDFCatalog extends PDFDict {
       this.set(PDFName.of('ViewerPreferences'), viewerPrefsRef);
     }
     return viewerPrefs;
+  }
+
+  /**
+   * Inserts the given ref as a leaf node of this catalog's page tree at the
+   * specified index (zero-based). Also increments the `Count` of each node in
+   * the page tree hierarchy to accomodate the new page.
+   *
+   * Returns the ref of the PDFPageTree node into which `leafRef` was inserted.
+   */
+  /** DPart support */
+  DPart(): PDFDict | undefined {
+    return this.lookupMaybe(PDFName.of('DPart'), PDFDict);
+  }
+
+  getDPart(): PDFDict | undefined {
+    const dict = this.DPart();
+    if (!dict) return undefined;
+    return dict;
+  }
+
+  setDPart(dpartRef: PDFRef) {
+    this.set(PDFName.of('DPart'), dpartRef);
+  }
+
+  /** OutputIntents support */
+  OutputIntents(): PDFArray | undefined {
+    const oi = this.lookupMaybe(PDFName.of('OutputIntents'), PDFArray);
+    return oi;
+  }
+
+  setOutputIntents(arrayRef: PDFArray | PDFRef) {
+    this.set(PDFName.of('OutputIntents'), arrayRef);
   }
 
   /**

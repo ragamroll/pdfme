@@ -1,7 +1,5 @@
 import type {
   Template,
-  TemplateVTConfig,
-  RecordDPartInfo,
   GenerateProps,
 } from '@pdfme/common';
 
@@ -33,7 +31,7 @@ export function getDPartOptionsFromTemplate(template: Template): DPartOptions | 
  * Extract VT configuration from template.
  * Returns undefined if VT is not configured.
  */
-export function getVTConfigFromTemplate(template: Template): TemplateVTConfig | undefined {
+export function getVTConfigFromTemplate(template: Template): any | undefined {
   return (template as any).vt;
 }
 
@@ -157,8 +155,8 @@ export function buildDPartMetadata(
 export function buildRecordVTMetadata(
   recordIndex: number,
   input: Record<string, any>,
-  vtConfig?: TemplateVTConfig,
-): RecordDPartInfo {
+  vtConfig?: any,
+): any {
   const recordId = extractRecordId(input, recordIndex, vtConfig?.recordIdFields);
   const recordMetadata = extractMetadata(input, vtConfig?.metadataFields);
 
@@ -214,10 +212,11 @@ export function validateDPartInputs(
  * @param inputs - Array of input records
  * @param vtConfig - VT configuration
  * @throws Error if required fields are missing
+/**
  */
 export function validateVTInputs(
   inputs: Record<string, any>[],
-  vtConfig?: TemplateVTConfig,
+  vtConfig?: any,
 ): void {
   if (!vtConfig || !vtConfig.recordIdFields || vtConfig.recordIdFields.length === 0) {
     return;
@@ -247,7 +246,7 @@ export function validateVTInputs(
  */
 export function generateXMPMetadata(
   vtNamespaceVersion: string = '1.0',
-  recordDParts: RecordDPartInfo[] = [],
+  recordDParts: any[] = [],
 ): string {
   const timestamp = new Date().toISOString();
 

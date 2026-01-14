@@ -9,6 +9,7 @@ import PDFEmbeddedPage from './PDFEmbeddedPage';
 import PDFFont from './PDFFont';
 import PDFImage from './PDFImage';
 import PDFPage from './PDFPage';
+import DPart from './DPart';
 import PDFForm from './form/PDFForm';
 import { PageSizes } from './sizes';
 import { StandardFonts } from './StandardFonts';
@@ -1322,6 +1323,93 @@ export default class PDFDocument {
     }
 
     return undefined;
+  }
+
+  /**
+   * Create a new DPartRoot for PDF/VT support.
+   */
+  createDPartRoot() {
+    return DPart.createRoot(this.context);
+  }
+
+  /**
+   * Attach a DPartRoot to the document catalog.
+   * @param dpart The DPart instance to attach.
+   */
+  setDPartRoot(dpart: DPart) {
+    const ref = this.context.register(dpart.asDict());
+    this.catalog.setDPart(ref);
+  }
+
+  /**
+   * Inject an XMP packet containing the GTS_PDFVT namespace and versioning
+   * information into the document's Metadata stream.
+   * @param version The PDF/VT version (e.g., '1.0').
+   * @param conformance The conformance string (e.g., 'PDF/VT-1').
+   */
+  setPDFVTXMP(version: string = '1.0', conformance: string = 'PDF/VT-1') {
+    const xmlns = 'http://www.gwg.org/pdfvt/1.0/';
+    const xmp =
+      `<?xpacket begin='\\uFEFF' id='W5M0MpCehiHzreSzNTczkc9d'?>\\n` +
+      `<x:xmpmeta xmlns:x='adobe:ns:meta/'>\\n` +
+      `  <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>\\n` +
+      `    <rdf:Description rdf:about='' xmlns:pdfvt='${xmlns}'>\\n` +
+      `      <pdfvt:Conformance>${conformance}</pdfvt:Conformance>\\n` +
+      `      <pdfvt:Version>${version}</pdfvt:Version>\\n` +
+      `    </rdf:Description>\\n` +
+      `  </rdf:RDF>\\n` +
+      `</x:xmpmeta>\\n` +
+      `<?xpacket end='w'?>`;
+
+    const metadataStream = this.context.stream(xmp, {
+      Type: 'Metadata',
+      Subtype: 'XML',
+    });
+    const metadataRef = this.context.register(metadataStream);
+    this.catalog.set(PDFName.of('Metadata'), metadataRef);
+  }
+
+  /**
+   * Embed an ICC profile as an OutputIntent and add it to the Catalog's
+   * OutputIntents array. The provided `icc` should be the raw ICC profile bytes.
+   */
+  attachOutputIntent(
+    icc: Uint8Array,
+    options: {
+      OutputConditionIdentifier?: string;
+      Info?: string;
+      RegistryName?: string;
+      S?: string;
+    } = {},
+  ) {
+    const {
+      OutputConditionIdentifier = 'Custom',
+      Info = '',
+      RegistryName = '',
+      S = 'GTS_PDFX',
+    } = options;
+
+    const iccStream = this.context.stream(icc, { N: 0 });
+    const iccRef = this.context.register(iccStream);
+
+    const oiDict = this.context.obj({
+      Type: 'OutputIntent',
+      S,
+      OutputConditionIdentifier,
+      Info,
+      RegistryName: RegistryName || undefined,
+      DestOutputProfile: iccRef,
+    });
+
+    const oiRef = this.context.register(oiDict);
+
+    let oiArray = this.catalog.OutputIntents();
+    if (!oiArray) {
+      oiArray = this.context.obj([oiRef]);
+      this.catalog.setOutputIntents(oiArray);
+    } else {
+      oiArray.push(oiRef);
+    }
   }
 
   private async embedAll(embeddables: Embeddable[]): Promise<void> {

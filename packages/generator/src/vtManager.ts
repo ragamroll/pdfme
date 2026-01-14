@@ -1,5 +1,4 @@
 import { PDFDocument, PDFName, PDFDict, PDFArray } from '@pdfme/pdf-lib';
-import type { RecordDPartInfo, TemplateVTConfig } from '@pdfme/common';
 
 /**
  * DPart Leaf Node representation for a single record.
@@ -17,13 +16,13 @@ interface DPartLeafNode {
  * It provides low-level access to pdf-lib's context for DPart injection.
  */
 export class VTManager {
-  private recordDParts: RecordDPartInfo[] = [];
+  private recordDParts: any[] = [];
   private dpartLeafNodes: DPartLeafNode[] = [];
-  private vtConfig?: TemplateVTConfig;
+  private vtConfig?: any;
   private complianceMode: boolean = false;
   private dpartRootNode?: any;
 
-  constructor(vtConfig?: TemplateVTConfig, complianceMode: boolean = false) {
+  constructor(vtConfig?: any, complianceMode: boolean = false) {
     this.vtConfig = vtConfig;
     this.complianceMode = complianceMode;
   }
@@ -52,8 +51,8 @@ export class VTManager {
     startPageIndex: number,
     endPageIndex: number,
     metadata: Record<string, any> = {},
-  ): RecordDPartInfo {
-    const dpartInfo: RecordDPartInfo = {
+  ): any {
+    const dpartInfo: any = {
       recordIndex,
       recordId,
       startPageIndex,
@@ -68,14 +67,14 @@ export class VTManager {
   /**
    * Get all registered DPart information.
    */
-  getDParts(): RecordDPartInfo[] {
+  getDParts(): any[] {
     return [...this.recordDParts];
   }
 
   /**
    * Get DPart information for a specific record index.
    */
-  getDPartByRecordIndex(recordIndex: number): RecordDPartInfo | undefined {
+  getDPartByRecordIndex(recordIndex: number): any | undefined {
     return this.recordDParts.find((d) => d.recordIndex === recordIndex);
   }
 
@@ -367,7 +366,7 @@ export class VTManager {
   /**
    * Get configuration for this VT manager.
    */
-  getConfig(): TemplateVTConfig | undefined {
+  getConfig(): any | undefined {
     return this.vtConfig;
   }
 
