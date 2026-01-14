@@ -46,7 +46,70 @@ For a detailed list of supported features, please refer to the [Supported Featur
 
 ## Documentation
 
-For complete documentation on pdfme, please refer to the [Getting Started](https://pdfme.com/docs/getting-started) guide. 
+For complete documentation on pdfme, please refer to the [Getting Started](https://pdfme.com/docs/getting-started) guide.
+
+## PDF/VT Support (Variable Data Printing)
+
+pdfme now supports **PDF/VT** (PDF for Variable Data) for professional print production workflows. This enables:
+
+- **Document Part (DPart) Hierarchy**: Automatic mapping of variable data records to PDF/VT document structure
+- **Output Intent Support**: ICC color profile embedding for color-consistent printing
+- **XMP Metadata**: PDF/VT-compliant metadata for print production systems
+- **Resource Management**: Automatic font and image embedding for print compliance
+
+### Quick Start with PDF/VT
+
+```typescript
+import { generate } from '@pdfme/generator';
+
+const template = {
+  basePdf: 'base64_or_url',
+  schemas: [...],
+  dpartOptions: {
+    enabled: true,
+    version: 'PDF/VT-1',
+    mapping: {
+      'InvoiceNumber': 'invoice_number',
+      'RecipientID': 'customer_id',
+      'Region': 'region'
+    },
+    outputIntent: {
+      profileName: 'Coated FOGRA39',
+      registryName: 'http://www.color.org'
+    },
+    enforceCompliance: true
+  }
+};
+
+const inputs = [
+  { invoice_number: 'INV-001', customer_id: 'CUST-001', region: 'North America' },
+  { invoice_number: 'INV-002', customer_id: 'CUST-002', region: 'Europe' }
+];
+
+const pdf = await generate({
+  template,
+  inputs,
+  options: { pdfvt: true } // Enable PDF/VT mode
+});
+```
+
+### Generating VDP Samples
+
+To generate a PDF/VT sample using test data:
+
+```bash
+# Generate sample PDF
+npx ts-node -r tsconfig-paths/register scripts/generate_vdp_sample.ts \
+  --data test-data/vdp-data.json \
+  --output /tmp
+
+# Run validation tests
+npm test -- PDFVTDataDriven.spec.ts
+```
+
+### PDF/VT Documentation
+
+For detailed information about PDF/VT setup and configuration, see [PDFVT.md](./PDFVT.md).
 
 Need interactive help? Use [DeepWiki](https://deepwiki.com/pdfme/pdfme) to ask questions about pdfme's documentation and source code directly.
 

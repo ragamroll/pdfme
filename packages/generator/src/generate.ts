@@ -16,6 +16,18 @@ import {
   getEmbedPdfPages,
   validateRequiredFields,
 } from './helper.js';
+import { VTManager } from './vtManager.js';
+import {
+  getDPartOptionsFromTemplate,
+  getVTConfigFromTemplate,
+  isVTEnabled,
+  extractRecordId,
+  extractMetadata,
+  extractDPartMetadata,
+  validateVTInputs,
+  validateDPartInputs,
+  buildDPartMetadata,
+} from './vtHelper.js';
 
 const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> => {
   checkGenerateProps(props);
@@ -32,12 +44,36 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
 
   validateRequiredFields(template, inputs);
 
+  // Initialize VT/DPart support
+  const dpartOptions = getDPartOptionsFromTemplate(template);
+  const vtConfig = getVTConfigFromTemplate(template);
+  const enablePDFVT = (options as any).pdfvt === true; // Opt-in flag
+  const isDPartEnabled = (dpartOptions?.enabled === true || enablePDFVT) && dpartOptions !== undefined;
+  const isVT = isDPartEnabled || isVTEnabled(template);
+  const enforceCompliance = dpartOptions?.enforceCompliance === true || (options as any).enforceVTCompliance === true;
+  
+  // Only enable VTManager if VT is explicitly enabled via option or template config
+  const vtManager = enablePDFVT || isVT ? new VTManager(vtConfig, enforceCompliance) : null;
+
+  // Validate inputs if enabled
+  if (vtManager) {
+    if (isDPartEnabled) {
+      validateDPartInputs(inputs, dpartOptions);
+    }
+    if (isVT && !isDPartEnabled) {
+      validateVTInputs(inputs, vtConfig);
+    }
+  }
+
   const { pdfDoc, renderObj } = await preprocessing({ template, userPlugins });
 
   const _cache = new Map<string, unknown>();
 
   for (let i = 0; i < inputs.length; i += 1) {
     const input = inputs[i];
+
+    // Track the page index where this record starts (for VT DPart mapping)
+    const recordStartPageIndex = vtManager ? vtManager.getRecordStartPageIndex(pdfDoc) : pdfDoc.getPageCount();
 
     // Get the dynamic template with proper typing
     const dynamicTemplate: Template = await getDynamicTemplate({
@@ -157,6 +193,40 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
         await render(renderProps);
       }
     }
+
+    // Register DPart information for this record if VT/DPart is enabled
+    if (vtManager && (isVT || isDPartEnabled)) {
+      const recordEndPageIndex = pdfDoc.getPageCount() - 1;
+      
+      // Use DPart mapping if available, otherwise use legacy VT config
+      let recordId: string;
+      let metadata: Record<string, any>;
+
+      if (isDPartEnabled && dpartOptions) {
+        // For DPart: extract record ID from input (use first mapped field as ID if available)
+        const mappedFields = Object.values(dpartOptions.mapping || {});
+        recordId = extractRecordId(input, i, mappedFields.length > 0 ? mappedFields : undefined);
+        metadata = buildDPartMetadata(i, input, dpartOptions);
+      } else {
+        // For legacy VT: use configured fields
+        recordId = extractRecordId(input, i, vtConfig?.recordIdFields);
+        metadata = extractMetadata(input, vtConfig?.metadataFields);
+      }
+
+      vtManager.registerRecordDPart(i, recordId, recordStartPageIndex, recordEndPageIndex, metadata);
+
+      // If DPart is enabled, create the leaf node for this record
+      if (isDPartEnabled && dpartOptions) {
+        vtManager.createDPartLeafNode(pdfDoc, recordId, metadata);
+      }
+    }
+  }
+
+  // Apply VT/DParts to the document if enabled
+  if (vtManager && (isVT || isDPartEnabled)) {
+    await vtManager.applyDPartsToPDF(pdfDoc);
+    // Validate embedded resources if compliance mode is enabled
+    vtManager.validateEmbeddedResources(pdfDoc);
   }
 
   postProcessing({ pdfDoc, options });

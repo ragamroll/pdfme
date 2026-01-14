@@ -98,6 +98,88 @@ export const ColorType = z.enum(['rgb', 'cmyk']).optional();
 
 export const Size = z.object({ height: z.number(), width: z.number() });
 
+/**
+ * Output Intent configuration for PDF/VT and PDF/X-4 compliance.
+ * Provides color profile information for professional print environments.
+ */
+export const DPartOutputIntent = z.object({
+  /**
+   * Name of the ICC color profile (e.g., "Coated FOGRA39", "Uncoated FOGRA29").
+   */
+  profileName: z.string().optional(),
+
+  /**
+   * Registry name or URL for the color profile.
+   * Common: "http://www.color.org"
+   */
+  registryName: z.string().optional(),
+
+  /**
+   * Base64-encoded ICC profile data. If provided, takes precedence over profileName/registryName.
+   */
+  profileData: z.string().optional(),
+});
+
+/**
+ * DPart mapping configuration that bridges variable data fields to DPart metadata keys.
+ * Maps professional printer DPart keys to pdfme schema names.
+ */
+export const DPartMapping = z.record(
+  z.string(), // DPart metadata key (e.g., "InvoiceNumber", "Segment")
+  z.string(), // Schema field name (e.g., "invoice_number", "region")
+);
+
+/**
+ * Document Part (DPart) options for PDF/VT variable data printing.
+ * Configures how records are mapped to the PDF/VT Document Part hierarchy.
+ */
+export const DPartOptions = z.object({
+  /**
+   * Enable PDF/VT Document Part (DPart) structure generation.
+   * When true, each record will be mapped to a DPart node in the document catalog.
+   */
+  enabled: z.boolean().optional(),
+
+  /**
+   * PDF/VT version/standard to target.
+   * Examples: "PDF/VT-1" (single-file), "PDF/VT-2" (multi-file streaming).
+   * Defaults to "PDF/VT-1" when dpartOptions is enabled.
+   */
+  version: z.string().optional(),
+
+  /**
+   * Maps DPart metadata keys (recognized by professional printers) to template schema field names.
+   * Example:
+   * {
+   *   "InvoiceNumber": "invoice_number",
+   *   "Segment": "region",
+   *   "RecipientID": "customer_id"
+   * }
+   *
+   * For each input record, the generator extracts values from the mapped schema fields
+   * and creates corresponding DPart nodes with these metadata keys.
+   */
+  mapping: DPartMapping.optional(),
+
+  /**
+   * Output Intent (color profile) configuration for PDF/X-4 and PDF/VT compliance.
+   * Ensures color accuracy across professional digital printing systems.
+   */
+  outputIntent: DPartOutputIntent.optional(),
+
+  /**
+   * If true, enforce strict PDF/VT compliance validation.
+   * Will throw errors if resources are not fully embedded or compliance rules are violated.
+   */
+  enforceCompliance: z.boolean().optional(),
+
+  /**
+   * Additional XMP metadata namespace version.
+   * Defaults to "1.0" for PDF/VT-1 compliance.
+   */
+  xmpNamespaceVersion: z.string().optional(),
+});
+
 export const Schema = z
   .object({
     name: z.string(),
@@ -143,6 +225,8 @@ export const Template = z
     schemas: SchemaPageArray,
     basePdf: BasePdf,
     pdfmeVersion: z.string().optional(),
+    dpartOptions: DPartOptions.optional(),
+    vt: TemplateVTConfig.optional(),
   })
   .passthrough();
 

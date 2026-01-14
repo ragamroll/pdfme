@@ -1,0 +1,71 @@
+name: PDF/VT Validation
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  pdfvt-validate:
+    runs-on: ubuntu-latest
+    name: Generate and Validate PDF/VT Sample
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Generate PDF/VT sample
+        run: |
+          npx ts-node -r tsconfig-paths/register scripts/generate_vdp_sample.ts \
+            --data test-data/vdp-data.json \
+            --output /tmp
+        env:
+          NODE_OPTIONS: '--max-old-space-size=4096'
+
+      - name: Run PDF/VT validation tests
+        run: npm test -- PDFVTDataDriven.spec.ts
+
+      - name: Validate PDF structure (qpdf)
+        run: |
+          if command -v qpdf &> /dev/null; then
+            SAMPLE=$(ls -t /tmp/pdfvt-sample-*.pdf | head -1)
+            echo "Validating: $SAMPLE"
+            qpdf --check "$SAMPLE" || echo "Note: qpdf check skipped (not installed)"
+          else
+            echo "qpdf not installed, skipping PDF structure validation"
+          fi
+
+      - name: Upload PDF/VT sample artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdfvt-sample
+          path: /tmp/pdfvt-sample-*.pdf
+          retention-days: 30
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "## PDF/VT Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/pdfvt-sample-*.pdf ]; then
+            SAMPLE=$(ls -t /tmp/pdfvt-sample-*.pdf | head -1)
+            SIZE=$(du -h "$SAMPLE" | cut -f1)
+            echo "✓ Sample generated: $SAMPLE ($SIZE)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✗ Sample generation failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi

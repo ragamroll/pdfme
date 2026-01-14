@@ -1,0 +1,37 @@
+{
+  "records": [
+    {
+      "recordId": "INV-2024-001",
+      "recipientId": "CUST-001",
+      "firstName": "John",
+      "lastName": "Doe",
+      "company": "ACME Corp",
+      "invoiceNumber": "INV-2024-001",
+      "invoiceAmount": "$1,250.00",
+      "dueDate": "2024-02-15",
+      "region": "North America"
+    },
+    {
+      "recordId": "INV-2024-002",
+      "recipientId": "CUST-002",
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "company": "Tech Solutions Inc",
+      "invoiceNumber": "INV-2024-002",
+      "invoiceAmount": "$2,500.00",
+      "dueDate": "2024-02-20",
+      "region": "Europe"
+    },
+    {
+      "recordId": "INV-2024-003",
+      "recipientId": "CUST-003",
+      "firstName": "Robert",
+      "lastName": "Johnson",
+      "company": "Global Enterprises",
+      "invoiceNumber": "INV-2024-003",
+      "invoiceAmount": "$3,750.00",
+      "dueDate": "2024-02-25",
+      "region": "Asia Pacific"
+    }
+  ]
+}

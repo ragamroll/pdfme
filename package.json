@@ -31,7 +31,7 @@
     "packages/ui"
   ],
   "scripts": {
-    "postinstall": "./scripts/link-workspaces.sh",
+    "postinstall": "./scripts/link-workspaces.sh && npm run -w packages/pdf-lib build 2>/dev/null || true",
     "clean": "run-p clean:*",
     "clean:common": "npm run -w packages/common clean",
     "clean:pdf-lib": "npm run -w packages/pdf-lib clean",

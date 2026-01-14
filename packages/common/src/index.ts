@@ -40,6 +40,12 @@ import type {
   UIProps,
   PreviewProps,
   DesignerProps,
+  VTMetadata,
+  TemplateVTConfig,
+  RecordDPartInfo,
+  DPartOutputIntent,
+  DPartMapping,
+  DPartOptions,
 } from './types.js';
 import {
   cloneDeep,
@@ -133,4 +139,10 @@ export type {
   PDFRenderProps,
   UIRenderProps,
   Mode,
+  VTMetadata,
+  TemplateVTConfig,
+  RecordDPartInfo,
+  DPartOutputIntent,
+  DPartMapping,
+  DPartOptions,
 };
