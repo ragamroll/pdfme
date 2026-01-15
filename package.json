@@ -50,7 +50,7 @@
     "build:ui": "npm run -w packages/ui build",
     "test": "npm run test --workspaces",
     "test:ui:update-snapshots": "npm run -w packages/ui test -- -u",
-    "test:vt": "npm run build && tsx acceptance_test/render.mjs",
+    "test:vt": "npm run build && npx tsx acceptance_test/render.mjs",
     "lint": "npm run lint --workspaces",
     "prettier": "npm run prettier --workspaces"
   },

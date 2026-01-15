@@ -3,5 +3,5 @@
   "features": {
     "ghcr.io/devcontainers/features/node:1": {}
   },
-  "postCreateCommand": "npm install -g typescript rimraf npm-run-all && npm install && npm run build"
+  "postCreateCommand": "npm install -g typescript rimraf npm-run-all tsx && npm install && npm run build"
 }
