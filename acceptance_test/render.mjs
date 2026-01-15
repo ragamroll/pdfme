@@ -1,15 +1,17 @@
 import fs from 'fs';
 import path from 'path';
+// Use standard package names - Works if 'npm install' linked them
 import { generate } from '@pdfme/generator';
 import { text, image, barcodes } from '@pdfme/schemas';
 
 async function main() {
   // 1. Resolve Plugins
-  // Build output provides clean, standard exports, so we can simplify this block
+  // Simplified: Build outputs/Workspaces provide clean exports 
+  // without needing the complex while-loop unwrapping
   const plugins = {
-    text,
-    image,
-    qrcode: barcodes.qrcode // Access directly from the built bundle
+    text: text.default || text,
+    image: image.default || image,
+    qrcode: barcodes.qrcode || barcodes.default?.qrcode
   };
 
   // 2. Load External Files
@@ -30,14 +32,12 @@ async function main() {
 
   // 3. Execution
   console.log(`🚀 Generating PDF/VT with ${inputs.length} records...`);
-  console.log('💡 Using distribution build output for generation.');
 
   try {
     const pdf = await generate({ 
       template, 
       inputs, 
       plugins,
-      // Pass the specific PDF/VT options used in your development
       options: {
         pdfvt: {
           enabled: true,
