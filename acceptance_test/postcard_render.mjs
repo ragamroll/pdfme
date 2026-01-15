@@ -5,21 +5,30 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bwipjs from 'bwip-js';
 
-// Resolve paths relative to this script in the acceptance_test folder
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Generates a USPS Intelligent Mail Barcode (IMb)
- * Returns a Base64 PNG Data URI for maximum compatibility with pdfme
+ * Extracts a 5-digit zip code from an address string
  */
-async function generateImbPng(payload) {
-  // Payload must be 20, 25, 29, or 31 digits
+function extractZip(address) {
+  const match = address.match(/\b\d{5}\b/);
+  return match ? match[0] : "00000"; // Fallback if no zip found
+}
+
+/**
+ * Generates IMb PNG Data URI
+ */
+async function generateImbPng(zip) {
+  // IMb Structure: BarcodeID(2) + ServiceType(3) + MailerID(6) + Serial(4) + Zip(5)
+  // Total must be exactly 20 digits for this configuration
+  const payload = `007001234567890${zip}`; 
+  
   const pngBuffer = await bwipjs.toBuffer({
-    bcid: 'onecode',       // USPS Intelligent Mail Barcode
+    bcid: 'onecode',
     text: payload,
-    scale: 4,              // High resolution for print
-    height: 4.5,           // Standard USPS height in mm
+    scale: 4,
+    height: 4.5,
     includetext: false,
   });
   return `data:image/png;base64,${pngBuffer.toString('base64')}`;
@@ -31,15 +40,12 @@ async function main() {
   const outputPath = path.join(__dirname, 'output_postcard_imb.pdf');
 
   try {
-    // 1. Load local files
     const template = JSON.parse(fs.readFileSync(templatePath, 'utf8'));
     const rawInputs = JSON.parse(fs.readFileSync(inputsPath, 'utf8'));
 
-    // 2. Process inputs and inject Barcodes
     const inputs = await Promise.all(rawInputs.map(async (record) => {
-      // 20-digit placeholder: BarcodeID(2) + Service(3) + MailerID(6) + Serial(9)
-      const imbPayload = "01234123456123456789"; 
-      const imbDataUri = await generateImbPng(imbPayload);
+      const zip = extractZip(record.address_line1);
+      const imbDataUri = await generateImbPng(zip);
       
       return {
         ...record,
@@ -47,26 +53,17 @@ async function main() {
       };
     }));
 
-    // 3. Generate PDF with required plugins
     const pdf = await generate({
       template,
       inputs,
-      plugins: {
-        text,
-        image,
-        qrcode: barcodes.qrcode
-      }
+      plugins: { text, image, qrcode: barcodes.qrcode }
     });
 
-    // 4. Save output
     fs.writeFileSync(outputPath, pdf);
-    console.log(`\x1b[32m🚀 Success! PDF generated at: ${outputPath}\x1b[0m`);
+    console.log(`🚀 Success! Generated ${inputs.length} unique postcards.`);
     
   } catch (error) {
-    console.error('\x1b[31m❌ Generation Failed:\x1b[0m', error.message);
-    if (error.message.includes('onecode')) {
-      console.log('💡 Tip: Ensure the payload is exactly 20, 25, 29, or 31 digits.');
-    }
+    console.error('❌ Generation Failed:', error.message);
   }
 }
 
