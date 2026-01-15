@@ -36,6 +36,7 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
 
   // PDF/VT setup
   let dpartRoot: pdfLib.PDFDPart | undefined;
+  console.log("DEBUG: dpartOptions in generator:", template.dpartOptions);
   const dpartOptions = template.dpartOptions;
   if (dpartOptions?.enabled) {
     dpartRoot = pdfDoc.catalog.getOrCreateDPart();
@@ -207,8 +208,9 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   }
 
   postProcessing({ pdfDoc, options });
+  if (dpartOptions?.enabled) { pdfDoc.catalog.set(pdfLib.PDFName.of("DPartRoot"), pdfDoc.catalog.get(pdfLib.PDFName.of("DPartRoot")) || pdfDoc.catalog.get(pdfLib.PDFName.of("DPart"))); }
 
-  return pdfDoc.save();
+  return pdfDoc.save({ useObjectStreams: false });
 };
 
 export default generate;

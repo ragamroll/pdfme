@@ -62,7 +62,7 @@ class PDFCatalog extends PDFDict {
   }
 
   DPart(): PDFDPart | undefined {
-    return this.lookupMaybe(PDFName.of('DPart'), PDFDict) as PDFDPart | undefined;
+    return this.lookupMaybe(PDFName.of('DPartRoot'), PDFDict) as PDFDPart | undefined;
   }
 
   getDPart(): PDFDPart | undefined {
@@ -76,7 +76,7 @@ class PDFCatalog extends PDFDict {
     if (!dpart) {
       dpart = PDFDPart.withContext(this.context);
       const dpartRef = this.context.register(dpart);
-      this.set(PDFName.of('DPart'), dpartRef);
+      this.set(PDFName.of('DPartRoot'), dpartRef);
     }
     return dpart;
   }
