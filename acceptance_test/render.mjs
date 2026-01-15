@@ -1,38 +1,15 @@
 import fs from 'fs';
 import path from 'path';
-import generateSource from '../packages/generator/src/generate.ts';
-import textSource from '../packages/schemas/src/text/index.ts';
-import imageSource from '../packages/schemas/src/graphics/image.ts';
-import * as barcodes from '../packages/schemas/src/barcodes/index.ts';
+import { generate } from '@pdfme/generator';
+import { text, image, barcodes } from '@pdfme/schemas';
 
 async function main() {
-  // 1. Resolve Generator & Plugins
-  // We handle both default and named exports to be safe in the monorepo
-  const generate = typeof generateSource === 'function' ? generateSource : generateSource.default;
-  
-// Drill through the nested default exports
-  let barcodeBundle = barcodes.default || barcodes;
-  while (barcodeBundle.default && Object.keys(barcodeBundle).length === 1) {
-    barcodeBundle = barcodeBundle.default;
-  }
-
-  // In some versions of pdfme, the barcode index exports 
-  // an object where the key IS 'qrcode', in others it's 'barcodes'
-  const qrcodePlugin = barcodeBundle.qrcode || 
-                       barcodeBundle.qrCode || 
-                       barcodeBundle.barcodes; // Added fallback
-
-  if (!qrcodePlugin) {
-    console.error('❌ Error: qrcode not found even after unwrapping.');
-    console.log('Final available keys:', Object.keys(barcodeBundle));
-    // If we see 'barcodes' in the keys, we might need to look inside THAT.
-    process.exit(1);
-  }
-
+  // 1. Resolve Plugins
+  // Build output provides clean, standard exports, so we can simplify this block
   const plugins = {
-    text: textSource.default || textSource,
-    image: imageSource.default || imageSource,
-    qrcode: qrcodePlugin
+    text,
+    image,
+    qrcode: barcodes.qrcode // Access directly from the built bundle
   };
 
   // 2. Load External Files
@@ -44,13 +21,7 @@ async function main() {
   const inputsPath = path.resolve(__dirname, 'inputs.json');
 
   if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath)) {
-    console.error(`❌ Error: Files not found.`);
-    console.error(`Looking in: ${__dirname}`);
-    process.exit(1);
-  }
-  
-  if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath)) {
-    console.error('❌ Error: template.json or inputs.json not found in the root directory.');
+    console.error(`❌ Error: Files not found in: ${__dirname}`);
     process.exit(1);
   }
 
@@ -59,13 +30,20 @@ async function main() {
 
   // 3. Execution
   console.log(`🚀 Generating PDF/VT with ${inputs.length} records...`);
-  console.log('💡 Using internal helper for blank basePdf if template.basePdf is empty.');
+  console.log('💡 Using distribution build output for generation.');
 
   try {
     const pdf = await generate({ 
       template, 
       inputs, 
-      plugins 
+      plugins,
+      // Pass the specific PDF/VT options used in your development
+      options: {
+        pdfvt: {
+          enabled: true,
+          mapping: { ContactName: 'name', RecordID: 'id', MemberCode: 'barcode' }
+        }
+      }
     });
 
     const outputPath = path.resolve(__dirname, 'output_vt.pdf');
