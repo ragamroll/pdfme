@@ -216,7 +216,12 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   }
 
   postProcessing({ pdfDoc, options });
-  if (dpartOptions?.enabled) { pdfDoc.catalog.set(pdfLib.PDFName.of("DPartRoot"), pdfDoc.catalog.get(pdfLib.PDFName.of("DPartRoot")) || pdfDoc.catalog.get(pdfLib.PDFName.of("DPart"))); }
+  if (dpartOptions?.enabled) { 
+    const dpartRoot = pdfDoc.catalog.get(pdfLib.PDFName.of("DPartRoot")) || pdfDoc.catalog.get(pdfLib.PDFName.of("DPart"));
+    if (dpartRoot) {
+      pdfDoc.catalog.set(pdfLib.PDFName.of("DPartRoot"), dpartRoot);
+    }
+  }
 
   return pdfDoc.save({ useObjectStreams: false });
 };

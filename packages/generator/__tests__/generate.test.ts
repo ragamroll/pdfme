@@ -1,6 +1,6 @@
 import generate from '../src/generate.js';
 import { Template, BLANK_PDF, Schema } from '@pdfme/common';
-import { getFont } from './utils.js';
+import { getFont, pdfToImages } from './utils.js';
 import 'jest-image-snapshot';
 
 const textObject = (x: number, y: number, name: string = 'a'): Schema => ({
