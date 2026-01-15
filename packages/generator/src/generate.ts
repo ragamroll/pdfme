@@ -15,6 +15,7 @@ import {
   postProcessing,
   getEmbedPdfPages,
   validateRequiredFields,
+  getBlankPdf,
 } from './helper.js';
 
 const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> => {
@@ -22,7 +23,14 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   const { inputs, template: _template, options = {}, plugins: userPlugins = {} } = props;
   const template = cloneDeep(_template);
 
-  const basePdf = template.basePdf;
+  let basePdf = template.basePdf;
+  
+  // Use blank PDF if basePdf is not provided
+  if (!basePdf) {
+    const blankPdfBase64 = await getBlankPdf();
+    basePdf = blankPdfBase64;
+    template.basePdf = basePdf;
+  }
 
   if (inputs.length === 0) {
     throw new Error(

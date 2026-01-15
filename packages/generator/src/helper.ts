@@ -170,3 +170,20 @@ export const insertPage = (arg: {
 
   return insertedPage;
 };
+
+export const getBlankPdf = async (): Promise<string> => {
+  // Create a new PDF document with a default A4 page
+  const pdfDoc = await PDFDocument.create();
+  // A4 size in points (210mm x 297mm)
+  const A4_WIDTH = 595.276;
+  const A4_HEIGHT = 841.890;
+  const page = pdfDoc.addPage([A4_WIDTH, A4_HEIGHT]);
+  
+  // Add invisible content stream to allow PDFPageEmbedder to function
+  page.drawText(' ', { size: 0 });
+  
+  // Save and convert to base64 Data URI
+  const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
+  const uint8Array = pdfBytes instanceof Uint8Array ? pdfBytes : new Uint8Array(pdfBytes);
+  return 'data:application/pdf;base64,' + Buffer.from(uint8Array).toString('base64');
+};
