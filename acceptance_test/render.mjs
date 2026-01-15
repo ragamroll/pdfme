@@ -6,8 +6,7 @@ import { text, image, barcodes } from '@pdfme/schemas';
 
 async function main() {
   // 1. Resolve Plugins
-  // Simplified: Build outputs/Workspaces provide clean exports 
-  // without needing the complex while-loop unwrapping
+  // Using standard exports from the built packages
   const plugins = {
     text: text.default || text,
     image: image.default || image,
