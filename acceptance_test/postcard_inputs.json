@@ -1,0 +1,8 @@
+[
+  {
+    "name_front": "Hello Alice Smith",
+    "name": "Alice Smith",
+    "address_line1": "123 Main St\nNew York, NY 10001",
+    "barcode": "https://example.com/p/101"
+  }
+]
