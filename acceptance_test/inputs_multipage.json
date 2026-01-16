@@ -1,6 +1,6 @@
 [
   { 
-    "name": "Alice Smith", 
+    "name": "AA One", 
     "id": "101", 
     "barcode": "USER-101", 
     "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
@@ -10,7 +10,7 @@
     "membershipLevel": "Gold"
   },
   { 
-    "name": "Bob Jones", 
+    "name": "Bbb Two", 
     "id": "102", 
     "barcode": "USER-102", 
     "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
@@ -20,7 +20,7 @@
     "membershipLevel": "Silver"
   },
   { 
-    "name": "Charlie Brown", 
+    "name": "Ccc Three", 
     "id": "103", 
     "barcode": "USER-103", 
     "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",

@@ -25,7 +25,7 @@ async function main() {
   const templateFileName = process.argv[2] || 'template.json';
   const inputsFileName = process.argv[3] || 'inputs.json';
   const outputFileName = process.argv[4];
-  const pdfvtConfigFileName = process.argv[5] || 'pdfvt_config.json';
+  const pdfvtConfigFileName = process.argv[5] || 'pdfvt-config.json';
   
   const templatePath = path.resolve(__dirname, templateFileName);
   const inputsPath = path.resolve(__dirname, inputsFileName);

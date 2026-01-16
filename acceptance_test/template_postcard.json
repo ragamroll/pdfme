@@ -1,4 +1,18 @@
 {
+  "basePdf": {
+    "width": 235.9,
+    "height": 158.75,
+    "padding": [0, 0, 0, 0]
+  },
+  "dpartOptions": {
+    "enabled": true,
+    "version": "PDF/VT-1",
+    "mapping": {
+      "ContactName": "name",
+      "RecordID": "id",
+      "BarcodeURL": "barcode"
+    }
+  },
   "schemas": [
     [
       {
