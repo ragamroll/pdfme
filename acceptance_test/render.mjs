@@ -17,30 +17,36 @@ async function main() {
   // This ensures it looks in the same folder as render.mjs
   const __dirname = path.dirname(new URL(import.meta.url).pathname);
   
-  // Accept template, inputs, and output paths as command-line arguments
-  // Usage: node render.mjs [templatePath] [inputsPath] [outputPath]
+  // Accept template, inputs, output, and pdfvt config paths as command-line arguments
+  // Usage: node render.mjs [templatePath] [inputsPath] [outputPath] [pdfvtConfigPath]
   // Default to template.json and inputs.json if not provided
   // Output name is auto-generated from template name if not provided
+  // PDF/VT config defaults to pdfvt_config.json if not provided
   const templateFileName = process.argv[2] || 'template.json';
   const inputsFileName = process.argv[3] || 'inputs.json';
   const outputFileName = process.argv[4];
+  const pdfvtConfigFileName = process.argv[5] || 'pdfvt_config.json';
   
   const templatePath = path.resolve(__dirname, templateFileName);
   const inputsPath = path.resolve(__dirname, inputsFileName);
+  const pdfvtConfigPath = path.resolve(__dirname, pdfvtConfigFileName);
   
   console.log('📂 Loading files...');
-  console.log(`   Template: ${templateFileName}`);
-  console.log(`   Inputs:   ${inputsFileName}`);
+  console.log(`   Template:   ${templateFileName}`);
+  console.log(`   Inputs:     ${inputsFileName}`);
+  console.log(`   PDF/VT Cfg: ${pdfvtConfigFileName}`);
 
-  if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath)) {
+  if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath) || !fs.existsSync(pdfvtConfigPath)) {
     console.error(`❌ Error: Files not found`);
-    console.error(`   Template: ${templatePath}`);
-    console.error(`   Inputs:   ${inputsPath}`);
+    console.error(`   Template:   ${templatePath}`);
+    console.error(`   Inputs:     ${inputsPath}`);
+    console.error(`   PDF/VT Cfg: ${pdfvtConfigPath}`);
     process.exit(1);
   }
 
   const template = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
   const inputs = JSON.parse(fs.readFileSync(inputsPath, 'utf-8'));
+  const pdfvtConfig = JSON.parse(fs.readFileSync(pdfvtConfigPath, 'utf-8'));
   
   // Generate output filename - use provided name or auto-generate from template name
   let outputPath;
@@ -61,10 +67,7 @@ async function main() {
       inputs, 
       plugins,
       options: {
-        pdfvt: {
-          enabled: true,
-          mapping: { ContactName: 'name', RecordID: 'id', MemberCode: 'barcode' }
-        }
+        pdfvt: pdfvtConfig
       }
     });
 
