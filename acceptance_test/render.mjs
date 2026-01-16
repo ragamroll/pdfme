@@ -14,20 +14,43 @@ async function main() {
   };
 
   // 2. Load External Files
-  console.log('📂 Loading template.json and inputs.json...');
-  
   // This ensures it looks in the same folder as render.mjs
   const __dirname = path.dirname(new URL(import.meta.url).pathname);
-  const templatePath = path.resolve(__dirname, 'template.json');
-  const inputsPath = path.resolve(__dirname, 'inputs.json');
+  
+  // Accept template, inputs, and output paths as command-line arguments
+  // Usage: node render.mjs [templatePath] [inputsPath] [outputPath]
+  // Default to template.json and inputs.json if not provided
+  // Output name is auto-generated from template name if not provided
+  const templateFileName = process.argv[2] || 'template.json';
+  const inputsFileName = process.argv[3] || 'inputs.json';
+  const outputFileName = process.argv[4];
+  
+  const templatePath = path.resolve(__dirname, templateFileName);
+  const inputsPath = path.resolve(__dirname, inputsFileName);
+  
+  console.log('📂 Loading files...');
+  console.log(`   Template: ${templateFileName}`);
+  console.log(`   Inputs:   ${inputsFileName}`);
 
   if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath)) {
-    console.error(`❌ Error: Files not found in: ${__dirname}`);
+    console.error(`❌ Error: Files not found`);
+    console.error(`   Template: ${templatePath}`);
+    console.error(`   Inputs:   ${inputsPath}`);
     process.exit(1);
   }
 
   const template = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
   const inputs = JSON.parse(fs.readFileSync(inputsPath, 'utf-8'));
+  
+  // Generate output filename - use provided name or auto-generate from template name
+  let outputPath;
+  if (outputFileName) {
+    outputPath = path.resolve(__dirname, outputFileName);
+  } else {
+    const templateBaseName = path.basename(templateFileName, path.extname(templateFileName));
+    const generatedOutputFileName = `output_${templateBaseName}_vt.pdf`;
+    outputPath = path.resolve(__dirname, generatedOutputFileName);
+  }
 
   // 3. Execution
   console.log(`🚀 Generating PDF/VT with ${inputs.length} records...`);
@@ -45,7 +68,6 @@ async function main() {
       }
     });
 
-    const outputPath = path.resolve(__dirname, 'output_vt.pdf');
     fs.writeFileSync(outputPath, pdf);
 
 // 4. Binary Audit
