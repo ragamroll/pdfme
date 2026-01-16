@@ -10,7 +10,8 @@
     "mapping": {
       "ContactName": "name",
       "RecordID": "id",
-      "MemberCode": "barcode"
+      "MemberCode": "barcode",
+      "PageCount": "pageCount"
     }
   },
   "schemas": [

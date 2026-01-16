@@ -48,6 +48,16 @@ async function main() {
   const inputs = JSON.parse(fs.readFileSync(inputsPath, 'utf-8'));
   const pdfvtConfig = JSON.parse(fs.readFileSync(pdfvtConfigPath, 'utf-8'));
   
+  // Compute pageCount from template structure and inject into each input record
+  // This enables the pageCount to be available for DPart mapping (finishing instructions)
+  const pageCount = template.schemas.length;
+  const enrichedInputs = inputs.map(input => ({
+    ...input,
+    pageCount: pageCount
+  }));
+  
+  console.log(`📄 Template has ${pageCount} page(s) per record`);
+  
   // Generate output filename - use provided name or auto-generate from template name
   let outputPath;
   if (outputFileName) {
@@ -59,12 +69,12 @@ async function main() {
   }
 
   // 3. Execution
-  console.log(`🚀 Generating PDF/VT with ${inputs.length} records...`);
+  console.log(`🚀 Generating PDF/VT with ${enrichedInputs.length} records...`);
 
   try {
     const pdf = await generate({ 
       template, 
-      inputs, 
+      inputs: enrichedInputs, 
       plugins,
       options: {
         pdfvt: pdfvtConfig
@@ -90,7 +100,7 @@ async function main() {
     console.log('====================================');
     console.log(`Document Structure:  ${hasDPartRoot ? '✅ DPartRoot Found' : '❌ DPartRoot Missing'}`);
     console.log(`ISO Compliance:      ${hasVTVersion ? '✅ VT Metadata Found' : '❌ VT Metadata Missing'}`);
-    console.log(`Record Indexing:     ${recordCount === inputs.length ? '✅' : '⚠️'} ${recordCount} records for ${inputs.length} inputs`);
+    console.log(`Record Indexing:     ${recordCount === enrichedInputs.length ? '✅' : '⚠️'} ${recordCount} records for ${enrichedInputs.length} inputs`);
     console.log(`File Size:           ${(buffer.length / 1024).toFixed(2)} KB`);
     console.log(`Output Location:     ${outputPath}`);
     console.log('====================================\n');
