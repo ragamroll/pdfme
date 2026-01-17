@@ -48,12 +48,16 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   const dpartOptions = template.dpartOptions;
   if (dpartOptions?.enabled) {
     dpartRoot = pdfDoc.catalog.getOrCreateDPart();
-    // Set XMP metadata for PDF/VT
+    // Set XMP metadata for PDF/VT and PDF/X
     const xmp = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-    <rdf:Description rdf:about="" xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/">
+    <rdf:Description rdf:about="" 
+      xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/"
+      xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/">
       <pdfvt:version>${dpartOptions.version}</pdfvt:version>
+      <pdfx:GTS_PDFXVersion>PDF/X-4</pdfx:GTS_PDFXVersion>
+      <pdfx:GTS_PDFVTVersion>${dpartOptions.version}</pdfx:GTS_PDFVTVersion>
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>
@@ -66,6 +70,7 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
         outputCondition: dpartOptions.outputIntent.profileName,
         outputConditionIdentifier: dpartOptions.outputIntent.profileName.replace(/\s+/g, ''),
         registryName: dpartOptions.outputIntent.registryName,
+        info: dpartOptions.outputIntent.info,
       });
     }
   }

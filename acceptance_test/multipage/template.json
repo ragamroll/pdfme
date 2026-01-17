@@ -7,6 +7,14 @@
   "dpartOptions": {
     "enabled": true,
     "version": "PDF/VT-1",
+    "outputIntent": {
+      "subtype": "GTS_PDFX",
+      "profileName": "GRACoL2006_Coated1v2",
+      "outputCondition": "GRACoL2006_Coated1v2",
+      "outputConditionIdentifier": "GRACoL2006_Coated1v2",
+      "registryName": "http://www.color.org",
+      "info": "GRACoL2006 Coated1v2"
+    },
     "mapping": {
       "ContactName": "name",
       "RecordID": "id",

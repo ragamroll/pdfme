@@ -145,6 +145,7 @@ export const DPartOptions = z.object({
   outputIntent: z.object({
     profileName: z.string(),
     registryName: z.string(),
+    info: z.string().optional(),
   }).optional(),
 });
 

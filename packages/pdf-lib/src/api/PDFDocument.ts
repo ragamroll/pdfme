@@ -553,21 +553,26 @@ export default class PDFDocument {
     destOutputProfile?: Uint8Array;
   }): void {
     const { subtype, outputCondition, outputConditionIdentifier, registryName, info, destOutputProfile } = options;
-    const outputIntent = this.context.obj({
-      Type: 'OutputIntent',
-      S: subtype,
-      OutputCondition: outputCondition,
-      OutputConditionIdentifier: outputConditionIdentifier,
-      RegistryName: registryName,
-      ...(info && { Info: info }),
-      ...(destOutputProfile && { DestOutputProfile: this.context.stream(destOutputProfile) }),
-    });
+    const outputIntentDict = new Map();
+    outputIntentDict.set(PDFName.of('Type'), PDFName.of('OutputIntent'));
+    outputIntentDict.set(PDFName.of('S'), PDFName.of(subtype));
+    outputIntentDict.set(PDFName.of('OutputCondition'), PDFString.of(outputCondition));
+    outputIntentDict.set(PDFName.of('OutputConditionIdentifier'), PDFString.of(outputConditionIdentifier));
+    outputIntentDict.set(PDFName.of('RegistryName'), PDFString.of(registryName));
+    if (info) {
+      outputIntentDict.set(PDFName.of('Info'), PDFString.of(info));
+    }
+    if (destOutputProfile) {
+      outputIntentDict.set(PDFName.of('DestOutputProfile'), this.context.stream(destOutputProfile));
+    }
+    const outputIntent = PDFDict.fromMapWithContext(outputIntentDict, this.context);
     const outputIntentRef = this.context.register(outputIntent);
 
     let outputIntents = this.catalog.lookupMaybe(PDFName.of('OutputIntents'), PDFArray);
     if (!outputIntents) {
       outputIntents = this.context.obj([]);
-      this.catalog.set(PDFName.of('OutputIntents'), outputIntents);
+      const outputIntentsRef = this.context.register(outputIntents);
+      this.catalog.set(PDFName.of('OutputIntents'), outputIntentsRef);
     }
     outputIntents.push(outputIntentRef);
   }
