@@ -8,11 +8,6 @@ import bwipjs from 'bwip-js';
 
 /**
  * Extracts a 5-digit zip code from an address string
-
-function extractZip(address) {
-  const match = address.match(/\b\d{5}\b/);
-  return match ? match[0] : "00000"; // Fallback if no zip found
-}
 */
 
 function extractZip(address) {
@@ -26,9 +21,8 @@ function extractZip(address) {
  * Returns a Base64 PNG Data URI for maximum compatibility with pdfme
  */
 async function generateImbPng(zip) {
-  // IMb Structure: BarcodeID(2) + ServiceType(3) + MailerID(6) + Serial(4) + Zip(5)
+  // IMb Structure: BarcodeID(2) + ServiceType(3) + MailerID(6) + Serial(9) + Zip(5)
   // Total must be exactly 20 digits for this configuration
-  //const payload = `007001234567890${zip}`;
   const payload = `00700123456789000000${zip}`;
   
   const pngBuffer = await bwipjs.toBuffer({
