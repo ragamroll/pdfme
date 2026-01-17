@@ -17,27 +17,29 @@ async function main() {
   // This ensures it looks in the same folder as render.mjs
   const __dirname = path.dirname(new URL(import.meta.url).pathname);
   
-  // Accept template, inputs, output, and pdfvt config paths as command-line arguments
-  // Usage: node render.mjs [templatePath] [inputsPath] [outputPath] [pdfvtConfigPath]
-  // Default to template.json and inputs.json if not provided
-  // Output name is auto-generated from template name if not provided
-  // PDF/VT config defaults to pdfvt_config.json if not provided
-  const templateFileName = process.argv[2] || 'template.json';
-  const inputsFileName = process.argv[3] || 'inputs.json';
-  const outputFileName = process.argv[4];
-  const pdfvtConfigFileName = process.argv[5] || 'pdfvt-config.json';
+  // Accept a single directory name as argument
+  // Usage: node render.mjs [directoryName]
+  // Reads: directoryName/template.json, directoryName/inputs.json, directoryName/pdfvt-config.json
+  // Outputs: directoryName.pdf
+  const directoryName = process.argv[2];
   
-  const templatePath = path.resolve(__dirname, templateFileName);
-  const inputsPath = path.resolve(__dirname, inputsFileName);
-  const pdfvtConfigPath = path.resolve(__dirname, pdfvtConfigFileName);
+  if (!directoryName) {
+    console.error('❌ Usage: node render.mjs <directoryName>');
+    console.error('   Example: node render.mjs multipage');
+    process.exit(1);
+  }
   
-  console.log('📂 Loading files...');
-  console.log(`   Template:   ${templateFileName}`);
-  console.log(`   Inputs:     ${inputsFileName}`);
-  console.log(`   PDF/VT Cfg: ${pdfvtConfigFileName}`);
+  const directoryPath = path.resolve(__dirname, directoryName);
+  const templatePath = path.resolve(directoryPath, 'template.json');
+  const inputsPath = path.resolve(directoryPath, 'inputs.json');
+  const pdfvtConfigPath = path.resolve(directoryPath, 'pdfvt-config.json');
+  const outputPath = path.resolve(__dirname, `${directoryName}.pdf`);
+  
+  console.log('📂 Loading files from directory...');
+  console.log(`   Directory:  ${directoryName}/`);
 
   if (!fs.existsSync(templatePath) || !fs.existsSync(inputsPath) || !fs.existsSync(pdfvtConfigPath)) {
-    console.error(`❌ Error: Files not found`);
+    console.error(`❌ Error: Files not found in ${directoryPath}`);
     console.error(`   Template:   ${templatePath}`);
     console.error(`   Inputs:     ${inputsPath}`);
     console.error(`   PDF/VT Cfg: ${pdfvtConfigPath}`);
@@ -58,16 +60,6 @@ async function main() {
   
   console.log(`📄 Template has ${pageCount} page(s) per record`);
   
-  // Generate output filename - use provided name or auto-generate from template name
-  let outputPath;
-  if (outputFileName) {
-    outputPath = path.resolve(__dirname, outputFileName);
-  } else {
-    const templateBaseName = path.basename(templateFileName, path.extname(templateFileName));
-    const generatedOutputFileName = `output_${templateBaseName}_vt.pdf`;
-    outputPath = path.resolve(__dirname, generatedOutputFileName);
-  }
-
   // 3. Execution
   console.log(`🚀 Generating PDF/VT with ${enrichedInputs.length} records...`);
 

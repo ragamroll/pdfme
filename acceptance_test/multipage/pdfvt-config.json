@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "mapping": {
+    "ContactName": "name",
+    "RecordID": "id",
+    "MemberCode": "barcode",
+    "PageCount": "pageCount"
+  }
+}
