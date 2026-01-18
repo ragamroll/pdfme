@@ -61,7 +61,7 @@
         "position": { "x": 136.525, "y": 105.425 },
         "width": 85,
         "height": 10,
-        "backgroundColor": "#ffffff00",
+        "backgroundColor": "#ffffff",
         "fontColor": "#000000",
         "fontSize": 12,
         "alignment": "left"
@@ -71,8 +71,8 @@
         "type": "text",
         "position": { "x": 136.525, "y": 115.425 },
         "width": 85,
-        "height": 20,
-        "backgroundColor": "#ffffff00",
+        "height": 25,
+        "backgroundColor": "#ffffff",
         "fontColor": "#000000",
         "fontSize": 11,
         "alignment": "left"
