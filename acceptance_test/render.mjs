@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { fork } from 'child_process';
+import { fileURLToPath } from 'url';
 // Use standard package names - Works if 'npm install' linked them
 import { generate } from '@pdfme/generator';
 import { text, image, barcodes } from '@pdfme/schemas';
@@ -15,7 +17,7 @@ async function main() {
 
   // 2. Load External Files
   // This ensures it looks in the same folder as render.mjs
-  const __dirname = path.dirname(new URL(import.meta.url).pathname);
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   
   // Accept a single directory name as argument
   // Usage: node render.mjs [directoryName]
@@ -27,6 +29,15 @@ async function main() {
     console.error('❌ Usage: node render.mjs <directoryName>');
     console.error('   Example: node render.mjs multipage');
     process.exit(1);
+  }
+
+  if (directoryName === 'postcard') {
+    console.log('📬 Delegating to render_postcard.mjs...');
+    const child = fork(path.resolve(__dirname, 'render_postcard.mjs'), [directoryName], { stdio: 'inherit' });
+    child.on('exit', (code) => {
+      process.exit(code ?? 0);
+    });
+    return;
   }
   
   const directoryPath = path.resolve(__dirname, directoryName);
