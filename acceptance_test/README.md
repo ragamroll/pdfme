@@ -100,6 +100,16 @@ Comprehensive PDF/VT-1 and PDF/X-4 compliance auditor. Checks:
 **Output:**
 Detailed compliance report for each PDF with overall status and exit code.
 
+## Manual Verification
+
+- Upload the generated pdf to https://pdfux.com/inspect-pdf/
+
+- Expand the **Root** tree so that **DPartRoot**, **OutputIntents** and **Pages** are visible.
+
+- Run the following code as a bookmarklet in your chrome browser
+```javascript
+javascript:(async function(){const wait=ms=>new Promise(r=>setTimeout(r,ms));const visitedRefs=new Set();async function expandNode(div){const header=div.querySelector(':scope > .inspect-node-elem');if(!header)return false;const expandBtn=header.querySelector('span[id$="-expand"]');if(expandBtn&&window.getComputedStyle(expandBtn).display!=='none'){expandBtn.click();await wait(700);return true;}return false;}async function walkAndExpand(currentDataId){const currentDiv=document.querySelector(`div[data-id="${currentDataId}"]`);if(!currentDiv)return;const header=currentDiv.querySelector(':scope > .inspect-node-elem');if(!header)return;/* EXTRACT THE PDF REFERENCE (e.g., '4 0 R') */const refMatch=header.innerText.match(/Indirect reference:\s*(\d+\s+\d+\s+R)/);if(refMatch){const ref=refMatch[1];if(visitedRefs.has(ref))return;/* STOP if we've already expanded this object */visitedRefs.add(ref);}await expandNode(currentDiv);const children=Array.from(currentDiv.querySelectorAll(`:scope > div[data-id^="${currentDataId}-"]`));for(const child of children){const text=child.innerText;const childId=child.getAttribute('data-id');if(text.includes('Dictionary')||text.includes('Array')||text.includes('Metadata')||text.includes('Indirect reference')){await walkAndExpand(childId);}}}const targets=['DPartRoot','OutputIntents','Pages'];const nodes={};for(const name of targets){const header=Array.from(document.querySelectorAll('.inspect-node-elem')).find(el=>el.innerText.includes(name));if(header){console.log(`Expanding ${name}...`);await walkAndExpand(header.parentElement.getAttribute('data-id'));nodes[name]=header.parentElement.cloneNode(true);}}await wait(1500);const htmlContent=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Reference-Safe Audit</title><style>body{font-family:monospace;background:#202124;color:#bdc1c6;padding:20px;}.inspect-node-elem{display:flex;align-items:center;padding:2px 0;}div[data-id]{border-left:1px solid #3c4043;padding-left:15px;}.h{color:#8ab4f8;margin-top:25px;border-bottom:1px solid #333;}</style></head><body>${targets.map(name=>%60<h2 class="h">${name}</h2>${nodes[name]?nodes[name].outerHTML:'<p>Not Found</p>'}%60).join('')}</body></html>%60;const blob=new Blob([htmlContent],{type:'text/html'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='pdf_vt_audit_ref_safe.html';link.click();})();
+```
 ## Test Configuration
 
 Each test directory contains:
