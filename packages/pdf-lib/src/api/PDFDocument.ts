@@ -519,6 +519,65 @@ export default class PDFDocument {
   }
 
   /**
+   * Set this document's XMP metadata. This is used for advanced metadata
+   * including PDF/VT information. For example:
+   * ```js
+   * pdfDoc.setXMP('<x:xmpmeta xmlns:x="adobe:ns:meta/">...</x:xmpmeta>')
+   * ```
+   * @param xmp The XMP metadata as an XML string.
+   */
+  setXMP(xmp: string): void {
+    assertIs(xmp, 'xmp', ['string']);
+    this.catalog.setXMP(xmp);
+  }
+
+  /**
+   * Set this document's output intent for color management. This is used
+   * for professional print production. For example:
+   * ```js
+   * pdfDoc.setOutputIntent({
+   *   subtype: 'GTS_PDFX',
+   *   outputCondition: 'Coated FOGRA39',
+   *   outputConditionIdentifier: 'FOGRA39',
+   *   registryName: 'http://www.color.org'
+   * })
+   * ```
+   * @param options The output intent options.
+   */
+  setOutputIntent(options: {
+    subtype: string;
+    outputCondition: string;
+    outputConditionIdentifier: string;
+    registryName: string;
+    info?: string;
+    destOutputProfile?: Uint8Array;
+  }): void {
+    const { subtype, outputCondition, outputConditionIdentifier, registryName, info, destOutputProfile } = options;
+    const outputIntentDict = new Map();
+    outputIntentDict.set(PDFName.of('Type'), PDFName.of('OutputIntent'));
+    outputIntentDict.set(PDFName.of('S'), PDFName.of(subtype));
+    outputIntentDict.set(PDFName.of('OutputCondition'), PDFString.of(outputCondition));
+    outputIntentDict.set(PDFName.of('OutputConditionIdentifier'), PDFString.of(outputConditionIdentifier));
+    outputIntentDict.set(PDFName.of('RegistryName'), PDFString.of(registryName));
+    if (info) {
+      outputIntentDict.set(PDFName.of('Info'), PDFString.of(info));
+    }
+    if (destOutputProfile) {
+      outputIntentDict.set(PDFName.of('DestOutputProfile'), this.context.stream(destOutputProfile));
+    }
+    const outputIntent = PDFDict.fromMapWithContext(outputIntentDict, this.context);
+    const outputIntentRef = this.context.register(outputIntent);
+
+    let outputIntents = this.catalog.lookupMaybe(PDFName.of('OutputIntents'), PDFArray);
+    if (!outputIntents) {
+      outputIntents = this.context.obj([]);
+      const outputIntentsRef = this.context.register(outputIntents);
+      this.catalog.set(PDFName.of('OutputIntents'), outputIntentsRef);
+    }
+    outputIntents.push(outputIntentRef);
+  }
+
+  /**
    * Set this document's creation date metadata. The creation date will appear
    * in the "Document Properties" section of most PDF readers. For example:
    * ```js

@@ -1,0 +1,53 @@
+{
+  "basePdf": "",
+  "dpartOptions": {
+    "enabled": true,
+    "version": "PDF/VT-1",
+    "outputIntent": {
+      "subtype": "GTS_PDFX",
+      "profileName": "GRACoL2006_Coated1v2",
+      "outputCondition": "GRACoL2006_Coated1v2",
+      "outputConditionIdentifier": "GRACoL2006_Coated1v2",
+      "registryName": "http://www.color.org",
+      "info": "GRACoL2006 Coated1v2"
+    },
+    "mapping": {
+      "ContactName": "name",
+      "RecordID": "id",
+      "MemberCode": "barcode",
+      "PageCount": "pageCount"
+    }
+  },
+  "schemas": [
+    [
+      {
+        "name": "name",
+        "type": "text",
+        "position": { "x": 20, "y": 20 },
+        "width": 100,
+        "height": 10
+      },
+      {
+        "name": "id",
+        "type": "text",
+        "position": { "x": 20, "y": 35 },
+        "width": 100,
+        "height": 10
+      },
+      {
+        "name": "barcode",
+        "type": "qrcode",
+        "position": { "x": 150, "y": 20 },
+        "width": 30,
+        "height": 30
+      },
+      {
+        "name": "photo",
+        "type": "image",
+        "position": { "x": 20, "y": 60 },
+        "width": 50,
+        "height": 50
+      }
+    ]
+  ]
+}

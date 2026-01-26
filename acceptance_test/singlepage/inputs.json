@@ -1,0 +1,20 @@
+[
+  { 
+    "name": "Alice Smith", 
+    "id": "101", 
+    "barcode": "USER-101", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" 
+  },
+  { 
+    "name": "Bob Jones", 
+    "id": "102", 
+    "barcode": "USER-102", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" 
+  },
+  { 
+    "name": "Charlie Brown", 
+    "id": "103", 
+    "barcode": "USER-103", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==" 
+  }
+]

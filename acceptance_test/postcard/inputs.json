@@ -1,0 +1,16 @@
+[
+  {
+    "name_front": "Hello Praveen",
+    "name": "Praveen Kumar",
+    "address_line1": "12935 Alcosta Blvd #3681\nSan Ramon\nCA 94583",
+    "barcode": "https://blue.reachpersona.com/traqr?id=1",
+    "id": "PRV001"
+  },
+  {
+    "name_front": "Hello Mani",
+    "name": "Mani Balan",
+    "address_line1": "12935 Alcosta Blvd #3681\nSan Ramon\nCA 95117",
+    "barcode": "https://blue.reachpersona.com/traqr?id=2",
+    "id": "MAN001"
+  }
+]

@@ -5,6 +5,7 @@ const sidebars = {
   tutorialSidebar: [
     'getting-started',
     'supported-features',
+    'pdf-vt',
     'tables',
     'expression',
     'headers-and-footers',

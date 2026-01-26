@@ -1,5 +1,5 @@
 import * as pdfLib from '@pdfme/pdf-lib';
-import type { GenerateProps, Schema, PDFRenderProps, Template } from '@pdfme/common';
+import type { GenerateProps, Schema, PDFRenderProps, Template, DPartOptions } from '@pdfme/common';
 import {
   checkGenerateProps,
   getDynamicTemplate,
@@ -15,6 +15,7 @@ import {
   postProcessing,
   getEmbedPdfPages,
   validateRequiredFields,
+  getBlankPdf,
 } from './helper.js';
 
 const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> => {
@@ -22,7 +23,14 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   const { inputs, template: _template, options = {}, plugins: userPlugins = {} } = props;
   const template = cloneDeep(_template);
 
-  const basePdf = template.basePdf;
+  let basePdf = template.basePdf;
+  
+  // Use blank PDF if basePdf is not provided
+  if (!basePdf) {
+    const blankPdfBase64 = await getBlankPdf();
+    basePdf = blankPdfBase64;
+    template.basePdf = basePdf;
+  }
 
   if (inputs.length === 0) {
     throw new Error(
@@ -34,10 +42,44 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
 
   const { pdfDoc, renderObj } = await preprocessing({ template, userPlugins });
 
+  // PDF/VT setup
+  let dpartRoot: pdfLib.PDFDPart | undefined;
+  console.log("DEBUG: dpartOptions in generator:", template.dpartOptions);
+  const dpartOptions = template.dpartOptions;
+  if (dpartOptions?.enabled) {
+    dpartRoot = pdfDoc.catalog.getOrCreateDPart();
+    // Set XMP metadata for PDF/VT and PDF/X
+    const xmp = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="" 
+      xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/"
+      xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/">
+      <pdfvt:version>${dpartOptions.version}</pdfvt:version>
+      <pdfx:GTS_PDFXVersion>PDF/X-4</pdfx:GTS_PDFXVersion>
+      <pdfx:GTS_PDFVTVersion>${dpartOptions.version}</pdfx:GTS_PDFVTVersion>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+    pdfDoc.setXMP(xmp);
+    // Set Output Intent
+    if (dpartOptions.outputIntent) {
+      pdfDoc.setOutputIntent({
+        subtype: 'GTS_PDFX',
+        outputCondition: dpartOptions.outputIntent.profileName,
+        outputConditionIdentifier: dpartOptions.outputIntent.profileName.replace(/\s+/g, ''),
+        registryName: dpartOptions.outputIntent.registryName,
+        info: dpartOptions.outputIntent.info,
+      });
+    }
+  }
+
   const _cache = new Map<string, unknown>();
 
   for (let i = 0; i < inputs.length; i += 1) {
     const input = inputs[i];
+    const pagesForInput: pdfLib.PDFPage[] = [];
 
     // Get the dynamic template with proper typing
     const dynamicTemplate: Template = await getDynamicTemplate({
@@ -82,6 +124,7 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
         basePage instanceof pdfLib.PDFEmbeddedPage ? pt2mm(embedPdfBox.mediaBox.y) : 0;
 
       const page = insertPage({ basePage, embedPdfBox, pdfDoc });
+      pagesForInput.push(page);
 
       if (isBlankPdf(basePdf) && basePdf.staticSchema) {
         for (let k = 0; k < basePdf.staticSchema.length; k += 1) {
@@ -157,11 +200,35 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
         await render(renderProps);
       }
     }
+
+    // PDF/VT: Create DPart node for this input
+    if (dpartRoot && dpartOptions) {
+      const dpartNode = pdfLib.PDFDPart.withContext(pdfDoc.context);
+      // Set metadata based on mapping
+      const metadata = pdfDoc.context.obj({});
+      for (const [key, field] of Object.entries(dpartOptions.mapping)) {
+        if (input[field]) {
+          metadata.set(pdfLib.PDFName.of(key), pdfLib.PDFString.of(String(input[field])));
+        }
+      }
+      dpartNode.setMetadata(metadata);
+      dpartRoot.addChild(dpartNode);
+      // Set DPart on each page for this input
+      for (const page of pagesForInput) {
+        page.setDPart(dpartNode);
+      }
+    }
   }
 
   postProcessing({ pdfDoc, options });
+  if (dpartOptions?.enabled) { 
+    const dpartRoot = pdfDoc.catalog.get(pdfLib.PDFName.of("DPartRoot")) || pdfDoc.catalog.get(pdfLib.PDFName.of("DPart"));
+    if (dpartRoot) {
+      pdfDoc.catalog.set(pdfLib.PDFName.of("DPartRoot"), dpartRoot);
+    }
+  }
 
-  return pdfDoc.save();
+  return pdfDoc.save({ useObjectStreams: false });
 };
 
 export default generate;

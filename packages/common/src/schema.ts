@@ -138,11 +138,23 @@ export const BasePdf = z.union([CustomPdf, BlankPdf]);
 export const LegacySchemaPageArray = z.array(z.record(z.string(), Schema));
 export const SchemaPageArray = z.array(z.array(Schema));
 
+export const DPartOptions = z.object({
+  enabled: z.boolean(),
+  version: z.string(),
+  mapping: z.record(z.string(), z.string()),
+  outputIntent: z.object({
+    profileName: z.string(),
+    registryName: z.string(),
+    info: z.string().optional(),
+  }).optional(),
+});
+
 export const Template = z
   .object({
     schemas: SchemaPageArray,
     basePdf: BasePdf,
     pdfmeVersion: z.string().optional(),
+    dpartOptions: DPartOptions.optional(),
   })
   .passthrough();
 

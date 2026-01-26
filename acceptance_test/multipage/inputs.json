@@ -1,0 +1,32 @@
+[
+  { 
+    "name": "AA One", 
+    "id": "101", 
+    "barcode": "USER-101", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+    "email": "alice.smith@example.com",
+    "phone": "+1-555-0101",
+    "address": "123 Oak Street, Springfield, IL 62701",
+    "membershipLevel": "Gold"
+  },
+  { 
+    "name": "Bbb Two", 
+    "id": "102", 
+    "barcode": "USER-102", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+    "email": "bob.jones@example.com",
+    "phone": "+1-555-0102",
+    "address": "456 Maple Avenue, Shelbyville, IL 62702",
+    "membershipLevel": "Silver"
+  },
+  { 
+    "name": "Ccc Three", 
+    "id": "103", 
+    "barcode": "USER-103", 
+    "photo": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+    "email": "charlie.brown@example.com",
+    "phone": "+1-555-0103",
+    "address": "789 Pine Road, Capital City, IL 62703",
+    "membershipLevel": "Bronze"
+  }
+]

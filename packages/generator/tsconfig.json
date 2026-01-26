@@ -1,5 +1,6 @@
 {
   "extends": "./tsconfig.esm",
+  "exclude": ["**/__tests__/*", "**/*.test.ts"]
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": ".",
@@ -15,4 +16,4 @@
       ]
     }
   },
-}
+} 

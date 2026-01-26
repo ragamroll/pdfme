@@ -44,6 +44,7 @@ export { default as PDFRawStream } from './objects/PDFRawStream';
 export { default as PDFCatalog } from './structures/PDFCatalog';
 export { default as PDFContentStream } from './structures/PDFContentStream';
 export { default as PDFCrossRefStream } from './structures/PDFCrossRefStream';
+export { default as PDFDPart } from './structures/PDFDPart';
 export { default as PDFObjectStream } from './structures/PDFObjectStream';
 export { default as PDFPageTree } from './structures/PDFPageTree';
 export { default as PDFPageLeaf } from './structures/PDFPageLeaf';

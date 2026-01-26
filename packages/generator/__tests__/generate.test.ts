@@ -3,17 +3,20 @@ import { Template, BLANK_PDF, Schema } from '@pdfme/common';
 import { getFont, pdfToImages } from './utils.js';
 import 'jest-image-snapshot';
 
+const textObject = (x: number, y: number, name: string = 'a'): Schema => ({
+  name,
+  type: 'text',
+  content: '',
+  position: { x, y },
+  width: 100,
+  height: 100,
+  fontSize: 13,
+  fontColor: '#000000',
+  fontName: 'NotoSerifJP-Regular',
+});
+
 describe('generate integrate test', () => {
   describe('basic generator', () => {
-    const textObject = (x: number, y: number, name: string = 'a'): Schema => ({
-      name,
-      type: 'text',
-      content: '',
-      position: { x, y },
-      width: 100,
-      height: 100,
-      fontSize: 13,
-    });
 
     const singleSchemaTemplate: Template = {
       basePdf: BLANK_PDF,
@@ -279,5 +282,35 @@ Check this document: https://pdfme.com/docs/custom-fonts#about-font-type`
 Check this document: https://pdfme.com/docs/custom-fonts`
       );
     }
+  });
+
+  describe('PDF/VT support', () => {
+    it('generates PDF with DPart structure', async () => {
+      const template: Template = {
+        basePdf: BLANK_PDF,
+        schemas: [[textObject(0, 0, 'invoice_number'), textObject(25, 25, 'region')]],
+        dpartOptions: {
+          enabled: true,
+          version: 'PDF/VT-1',
+          mapping: {
+            InvoiceNumber: 'invoice_number',
+            Segment: 'region',
+          },
+          outputIntent: {
+            profileName: 'Coated FOGRA39',
+            registryName: 'http://www.color.org',
+          },
+        },
+      };
+
+      const inputs = [
+        { invoice_number: 'INV001', region: 'North' },
+        { invoice_number: 'INV002', region: 'South' },
+      ];
+
+      const pdf = await generate({ inputs, template });
+      expect(pdf).toBeDefined();
+      expect(pdf.length).toBeGreaterThan(0);
+    });
   });
 });

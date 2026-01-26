@@ -10,3 +10,4 @@ coverage/
 **/repomix-output.{txt,xml}
 
 **/__diff_output__/**
+acceptance_test/*.pdf

@@ -573,4 +573,41 @@ describe(`PDFDocument`, () => {
       expect(pdfDoc.defaultWordBreaks).toEqual(srcDoc.defaultWordBreaks);
     });
   });
+
+  describe(`PDF/VT support`, () => {
+    it(`can create DPart structure`, async () => {
+      const pdfDoc = await PDFDocument.create();
+      const dpart = pdfDoc.catalog.getOrCreateDPart();
+      expect(dpart).toBeDefined();
+      expect(pdfDoc.catalog.DPart()).toBeDefined();
+    });
+
+    it(`can set XMP metadata`, async () => {
+      const pdfDoc = await PDFDocument.create();
+      const xmp = '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description rdf:about="" xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/"><pdfvt:version>PDF/VT-1</pdfvt:version></rdf:Description></rdf:RDF></x:xmpmeta>';
+      pdfDoc.setXMP(xmp);
+      expect(pdfDoc.catalog.get(PDFName.of('Metadata'))).toBeDefined();
+    });
+
+    it(`can set output intent`, async () => {
+      const pdfDoc = await PDFDocument.create();
+      pdfDoc.setOutputIntent({
+        subtype: 'GTS_PDFX',
+        outputCondition: 'Coated FOGRA39',
+        outputConditionIdentifier: 'FOGRA39',
+        registryName: 'http://www.color.org',
+      });
+      const outputIntents = pdfDoc.catalog.get(PDFName.of('OutputIntents'));
+      expect(outputIntents).toBeDefined();
+      expect(outputIntents instanceof PDFArray).toBe(true);
+    });
+
+    it(`can set DPart on page`, async () => {
+      const pdfDoc = await PDFDocument.create();
+      const page = pdfDoc.addPage();
+      const dpart = pdfDoc.catalog.getOrCreateDPart();
+      page.setDPart(dpart);
+      expect(page.node.get(PDFName.of('DPart'))).toBe(dpart);
+    });
+  });
 });
