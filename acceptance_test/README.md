@@ -225,9 +225,64 @@ For multi-page records (e.g., postcard with front/back):
 
 ```
 📂 Loading files from directory...
-   Directory: postcard/
+   Directory:  singlepage/
+📄 Template has 1 page(s) per record
+🚀 Generating PDF/VT with 3 records...
+DEBUG: dpartOptions in generator: {
+  enabled: true,
+  version: 'PDF/VT-1',
+  outputIntent: {
+    subtype: 'GTS_PDFX',
+    profileName: 'GRACoL2006_Coated1v2',
+    outputCondition: 'GRACoL2006_Coated1v2',
+    outputConditionIdentifier: 'GRACoL2006_Coated1v2',
+    registryName: 'http://www.color.org',
+    info: 'GRACoL2006 Coated1v2'
+  },
+  mapping: {
+    ContactName: 'name',
+    RecordID: 'id',
+    MemberCode: 'barcode',
+    PageCount: 'pageCount'
+  }
+}
+
+====================================
+      FINAL PDF/VT AUDIT LOG       
+====================================
+Document Structure:  ✅ DPartRoot Found
+ISO Compliance:      ✅ VT Metadata Found
+Color Intent:        ✅ OutputIntents Found
+Record Indexing:     ✅ 3 records for 3 inputs
+File Size:           24.27 KB
+Output Location:     /workspaces/pdfme/acceptance_test/singlepage.pdf
+====================================
+
+📬 Delegating to render_postcard.mjs...
+📂 Loading files from directory...
+   Directory:  postcard/
+Processing record for ZIP: 94583
+Processing record for ZIP: 95117
 📄 Template has 2 page(s) per record
 🚀 Generating PDF/VT with 2 records...
+DEBUG: dpartOptions in generator: {
+  enabled: true,
+  version: 'PDF/VT-1',
+  outputIntent: {
+    subtype: 'GTS_PDFX',
+    profileName: 'GRACoL2006_Coated1v2',
+    outputCondition: 'GRACoL2006_Coated1v2',
+    outputConditionIdentifier: 'GRACoL2006_Coated1v2',
+    registryName: 'http://www.color.org',
+    info: 'GRACoL2006 Coated1v2'
+  },
+  mapping: {
+    ContactName: 'name',
+    RecordID: 'id',
+    BarcodeURL: 'barcode',
+    PageCount: 'pageCount'
+  }
+}
 
 ====================================
       FINAL PDF/VT AUDIT LOG       
@@ -236,12 +291,119 @@ Document Structure:  ✅ DPartRoot Found
 ISO Compliance:      ✅ VT Metadata Found
 Color Intent:        ✅ OutputIntents Found
 Record Indexing:     ✅ 2 records for 2 inputs
-File Size:           1549.17 KB
+File Size:           1551.97 KB
 Output Location:     /workspaces/pdfme/acceptance_test/postcard.pdf
 ====================================
 
-🎉 All PDF files are PDF/VT-1 and PDF/X-4 compliant!
+📂 Loading files from directory...
+   Directory:  multipage/
+📄 Template has 2 page(s) per record
+🚀 Generating PDF/VT with 3 records...
+DEBUG: dpartOptions in generator: {
+  enabled: true,
+  version: 'PDF/VT-1',
+  outputIntent: {
+    subtype: 'GTS_PDFX',
+    profileName: 'GRACoL2006_Coated1v2',
+    outputCondition: 'GRACoL2006_Coated1v2',
+    outputConditionIdentifier: 'GRACoL2006_Coated1v2',
+    registryName: 'http://www.color.org',
+    info: 'GRACoL2006 Coated1v2'
+  },
+  mapping: {
+    ContactName: 'name',
+    RecordID: 'id',
+    MemberCode: 'barcode',
+    PageCount: 'pageCount'
+  }
+}
+
+====================================
+      FINAL PDF/VT AUDIT LOG       
+====================================
+Document Structure:  ✅ DPartRoot Found
+ISO Compliance:      ✅ VT Metadata Found
+Color Intent:        ✅ OutputIntents Found
+Record Indexing:     ✅ 3 records for 3 inputs
+File Size:           27.37 KB
+Output Location:     /workspaces/pdfme/acceptance_test/multipage.pdf
+====================================
+
+
+📄 Auditing: multipage.pdf
+────────────────────────────────────────────────────────────
+PDF/X-4 (Object-Level):
+  ✓ Catalog -> OutputIntents:    ✅
+  ✓ Catalog -> Metadata (PDF/X): ✅
+  ✓ Intent Dictionary Valid:     ✅
+
+PDF/VT-1 (Object-Level):
+  ✓ Catalog -> DPartRoot:        ✅
+  ✓ Catalog -> Metadata (VT):    ✅
+  ✓ DPart Tree Record Count:     ✅ (3/3)
+  ✓ Record-Level Metadata:       ✅ (3/3 records)
+
+Compliance: [✅ FULLY COMPLIANT]
+
+📄 Auditing: postcard.pdf
+────────────────────────────────────────────────────────────
+PDF/X-4 (Object-Level):
+  ✓ Catalog -> OutputIntents:    ✅
+  ✓ Catalog -> Metadata (PDF/X): ✅
+  ✓ Intent Dictionary Valid:     ✅
+
+PDF/VT-1 (Object-Level):
+  ✓ Catalog -> DPartRoot:        ✅
+  ✓ Catalog -> Metadata (VT):    ✅
+  ✓ DPart Tree Record Count:     ✅ (2/2)
+  ✓ Record-Level Metadata:       ✅ (2/2 records)
+
+Compliance: [✅ FULLY COMPLIANT]
+
+📄 Auditing: singlepage.pdf
+────────────────────────────────────────────────────────────
+PDF/X-4 (Object-Level):
+  ✓ Catalog -> OutputIntents:    ✅
+  ✓ Catalog -> Metadata (PDF/X): ✅
+  ✓ Intent Dictionary Valid:     ✅
+
+PDF/VT-1 (Object-Level):
+  ✓ Catalog -> DPartRoot:        ✅
+  ✓ Catalog -> Metadata (VT):    ✅
+  ✓ DPart Tree Record Count:     ✅ (3/3)
+  ✓ Record-Level Metadata:       ✅ (3/3 records)
+
+Compliance: [✅ FULLY COMPLIANT]
+
+════════════════════════════════════════════════════════════
+SUMMARY:
+  multipage.pdf: ✅
+  postcard.pdf: ✅
+  singlepage.pdf: ✅
 ```
+
+### **Technical Caveats & Known Assumptions**
+The current auditor (`final_audit.js`) includes "Soft Logic" to allow for common generation quirks. These should be addressed in the `pdfme` generator to reach strict ISO-compliance:
+
+#### **1. DPart Root Key Ambiguity**
+* **Assumption**: The auditor accepts either `/DParts` or `/Children` at the `DPartRoot` level.
+* **Strict Requirement**: Per ISO 16612-2, the root of the DPart tree **must** use the `/DParts` key. Only nested sub-nodes should use `/Children`.
+* **Action for Generator**: Update the `DPartRoot` dictionary to use the `/DParts` key specifically for the top-level container.
+
+#### **2. Metadata Inheritance**
+* **Assumption**: The auditor allows records to "inherit" metadata from parent nodes if a leaf node lacks its own `/Metadata` entry.
+* **Strict Requirement**: Every leaf node (Record) in the `DPart` tree should ideally have its own explicit `/Metadata` stream reference containing the `GTS_PDFVT` marker and `RecordID`.
+* **Action for Generator**: Ensure each leaf node in the hierarchy points to its own unique XMP Metadata stream.
+
+#### **3. OutputConditionIdentifier**
+* **Assumption**: The auditor passes if `OutputConditionIdentifier` is a valid string.
+* **Strict Requirement**: PDF/X-4 requires this string to match a recognized color characterization (e.g., `"FOGRA39"` or `"CGATS TR 006"`).
+* **Action for Generator**: Hardcode a standard profile string or allow it to be passed via template config to ensure it isn't just a placeholder.
+
+#### **4. PDF Header Version**
+* **Assumption**: The auditor does not currently check the magic bytes at the start of the file.
+* **Strict Requirement**: Both PDF/X-4 and PDF/VT-1 require a minimum PDF version of **1.6**.
+* **Action for Generator**: Ensure the PDF header is explicitly written as `%PDF-1.6` at the start of the file.
 
 ## Adding New Test Cases
 
