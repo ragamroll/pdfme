@@ -74,7 +74,7 @@ class PDFCatalog extends PDFDict {
   getOrCreateDPart(): PDFDPart {
     let dpart = this.getDPart();
     if (!dpart) {
-      dpart = PDFDPart.withContext(this.context);
+      dpart = PDFDPart.withContext(this.context, undefined, true);
       const dpartRef = this.context.register(dpart);
       this.set(PDFName.of('DPartRoot'), dpartRef);
     }

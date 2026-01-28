@@ -1,5 +1,5 @@
 import * as pdfLib from '@pdfme/pdf-lib';
-import type { GenerateProps, Schema, PDFRenderProps, Template, DPartOptions } from '@pdfme/common';
+import type { GenerateProps, Schema, PDFRenderProps, Template } from '@pdfme/common';
 import {
   checkGenerateProps,
   getDynamicTemplate,
@@ -48,31 +48,40 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   const dpartOptions = template.dpartOptions;
   if (dpartOptions?.enabled) {
     dpartRoot = pdfDoc.catalog.getOrCreateDPart();
-    // Set XMP metadata for PDF/VT and PDF/X
+    // Set XMP metadata for PDF/VT and PDF/X with proper namespace compliance
     const xmp = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/">
   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
     <rdf:Description rdf:about="" 
+      xmlns:pdfvmeta="http://www.npes.org/pdfvt/ns/id/"
       xmlns:pdfvt="http://www.gts-1.com/namespace/pdfvt/"
       xmlns:pdfx="http://ns.adobe.com/pdfx/1.3/">
       <pdfvt:version>${dpartOptions.version}</pdfvt:version>
       <pdfx:GTS_PDFXVersion>PDF/X-4</pdfx:GTS_PDFXVersion>
       <pdfx:GTS_PDFVTVersion>${dpartOptions.version}</pdfx:GTS_PDFVTVersion>
+      <pdfvmeta:GTS_PDFVT>true</pdfvmeta:GTS_PDFVT>
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>
 <?xpacket end="w"?>`;
     pdfDoc.setXMP(xmp);
-    // Set Output Intent
-    if (dpartOptions.outputIntent) {
-      pdfDoc.setOutputIntent({
-        subtype: 'GTS_PDFX',
-        outputCondition: dpartOptions.outputIntent.profileName,
-        outputConditionIdentifier: dpartOptions.outputIntent.profileName.replace(/\s+/g, ''),
-        registryName: dpartOptions.outputIntent.registryName,
-        info: dpartOptions.outputIntent.info,
-      });
-    }
+    
+    // Set Output Intent with standardized identifier
+    const outputIntentConfig = dpartOptions.outputIntent || {
+      profileName: 'FOGRA39',
+      registryName: 'http://www.color.org',
+      info: 'Coated FOGRA39 (ISO 12647-2:2004)',
+    };
+    
+    pdfDoc.setOutputIntent({
+      subtype: 'GTS_PDFX',
+      outputCondition: outputIntentConfig.profileName,
+      outputConditionIdentifier: outputIntentConfig.profileName.includes(' ') 
+        ? outputIntentConfig.profileName.replace(/\s+/g, '')
+        : outputIntentConfig.profileName,
+      registryName: outputIntentConfig.registryName,
+      info: outputIntentConfig.info,
+    });
   }
 
   const _cache = new Map<string, unknown>();
@@ -204,14 +213,40 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
     // PDF/VT: Create DPart node for this input
     if (dpartRoot && dpartOptions) {
       const dpartNode = pdfLib.PDFDPart.withContext(pdfDoc.context);
-      // Set metadata based on mapping
-      const metadata = pdfDoc.context.obj({});
+      
+      // Get RecordID from input
+      const recordIdField = dpartOptions.mapping.RecordID;
+      const recordId = recordIdField && input[recordIdField] ? String(input[recordIdField]) : `record-${i}`;
+      
+      // Create explicit XMP metadata stream for the leaf node
+      const xmpMetadata = `<?xpacket begin="" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about="" 
+      xmlns:pdfvmeta="http://www.npes.org/pdfvt/ns/id/">
+      <pdfvmeta:GTS_PDFVT>true</pdfvmeta:GTS_PDFVT>
+      <pdfvmeta:RecordID>${recordId}</pdfvmeta:RecordID>`;
+      
+      // Add additional metadata fields from mapping
+      let xmpContent = xmpMetadata;
       for (const [key, field] of Object.entries(dpartOptions.mapping)) {
-        if (input[field]) {
-          metadata.set(pdfLib.PDFName.of(key), pdfLib.PDFString.of(String(input[field])));
+        if (key !== 'RecordID' && input[field]) {
+          const value = String(input[field]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          xmpContent += `\n      <pdfvmeta:${key}>${value}</pdfvmeta:${key}>`;
         }
       }
-      dpartNode.setMetadata(metadata);
+      
+      xmpContent += `
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+      
+      // Create metadata stream and register it as an indirect object for proper structure
+      const xmpStream = pdfDoc.context.stream(xmpContent);
+      const xmpStreamRef = pdfDoc.context.register(xmpStream);
+      dpartNode.set(pdfLib.PDFName.of('Metadata'), xmpStreamRef);
+      
       dpartRoot.addChild(dpartNode);
       // Set DPart on each page for this input
       for (const page of pagesForInput) {

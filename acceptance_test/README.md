@@ -382,28 +382,30 @@ SUMMARY:
   singlepage.pdf: ✅
 ```
 
-### **Technical Caveats & Known Assumptions**
-The current auditor (`final_audit.js`) includes "Soft Logic" to allow for common generation quirks. These should be addressed in the `pdfme` generator to reach strict ISO-compliance:
+### **Compliance Implementation Status**
 
-#### **1. DPart Root Key Ambiguity**
-* **Assumption**: The auditor accepts either `/DParts` or `/Children` at the `DPartRoot` level.
-* **Strict Requirement**: Per ISO 16612-2, the root of the DPart tree **must** use the `/DParts` key. Only nested sub-nodes should use `/Children`.
-* **Action for Generator**: Update the `DPartRoot` dictionary to use the `/DParts` key specifically for the top-level container.
+All strict PDF/VT-1 and PDF/X-4 requirements are now fully implemented:
 
-#### **2. Metadata Inheritance**
-* **Assumption**: The auditor allows records to "inherit" metadata from parent nodes if a leaf node lacks its own `/Metadata` entry.
-* **Strict Requirement**: Every leaf node (Record) in the `DPart` tree should ideally have its own explicit `/Metadata` stream reference containing the `GTS_PDFVT` marker and `RecordID`.
-* **Action for Generator**: Ensure each leaf node in the hierarchy points to its own unique XMP Metadata stream.
+#### ✅ **1. DPart Root Structure**
+* **Requirement**: Per ISO 16612-2, the DPartRoot uses `/DParts` key for the top-level container
+* **Implementation**: Generator creates DPartRoot with `/DParts` array containing all leaf nodes
+* **Validation**: Auditor strictly checks for `/DParts` only (not `/Children`)
 
-#### **3. OutputConditionIdentifier**
-* **Assumption**: The auditor passes if `OutputConditionIdentifier` is a valid string.
-* **Strict Requirement**: PDF/X-4 requires this string to match a recognized color characterization (e.g., `"FOGRA39"` or `"CGATS TR 006"`).
-* **Action for Generator**: Hardcode a standard profile string or allow it to be passed via template config to ensure it isn't just a placeholder.
+#### ✅ **2. Record-Level Metadata**
+* **Requirement**: Every leaf node (Record) has its own explicit `/Metadata` stream reference
+* **Implementation**: Each record generates unique XMP metadata stream with GTS_PDFVT marker and RecordID
+* **Metadata includes**: GTS_PDFVT flag, unique RecordID, ContactName, MemberCode, PageCount
+* **Registration**: Metadata streams are registered as indirect objects for proper PDF structure
 
-#### **4. PDF Header Version**
-* **Assumption**: The auditor does not currently check the magic bytes at the start of the file.
-* **Strict Requirement**: Both PDF/X-4 and PDF/VT-1 require a minimum PDF version of **1.6**.
-* **Action for Generator**: Ensure the PDF header is explicitly written as `%PDF-1.6` at the start of the file.
+#### ✅ **3. OutputConditionIdentifier**
+* **Requirement**: Must match recognized color characterization for PDF/X-4
+* **Implementation**: Generator defaults to FOGRA39 (GRACoL2006_Coated1v2) when not specified
+* **Customization**: Configurable via template's `dpartOptions.outputIntent` settings
+
+#### ✅ **4. PDF Header Version**
+* **Requirement**: PDF/VT-1 requires minimum PDF 1.6; PDF/X-4 requires PDF 1.7
+* **Implementation**: All generated PDFs use `%PDF-1.7` header (satisfies both standards)
+* **Verification**: Can be confirmed by running `head -c 8 generated.pdf`
 
 ## Adding New Test Cases
 

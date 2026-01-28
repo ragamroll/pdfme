@@ -66,7 +66,8 @@ const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = req
         const hasLocalMeta = resolvedNode.has(PDFName.of('Metadata'));
         const effectiveMeta = hasLocalMeta || parentHasMeta;
 
-        const children = resolvedNode.get(PDFName.of('Children')) || resolvedNode.get(PDFName.of('DParts'));
+        // DPart tree uses /DParts exclusively (not /Children)
+        const children = resolvedNode.get(PDFName.of('DParts'));
         
         if (children) {
           const res = context.lookup(children);
