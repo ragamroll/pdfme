@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const zlib = require('zlib');
 const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = require('@pdfme/pdf-lib');
 
 (async () => {
@@ -7,11 +8,68 @@ const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = req
   let allTestsPassed = true;
   const summary = [];
 
+  // Helper function to detect color space in PDF content streams
+  const detectColorSpace = (pdfDoc) => {
+    let foundCMYK = false;
+    let foundRGB = false;
+
+    for (let pageIndex = 0; pageIndex < pdfDoc.getPageCount(); pageIndex++) {
+      try {
+        const page = pdfDoc.getPage(pageIndex);
+        const contents = page.node.get(PDFName.of('Contents'));
+        if (!contents) continue;
+
+        const context = pdfDoc.context;
+        const resolved = context.lookup(contents);
+        
+        const streamList = resolved instanceof PDFArray 
+          ? Array.from({length: resolved.size()}, (_, i) => context.lookup(resolved.get(i)))
+          : [resolved];
+
+        for (const stream of streamList) {
+          if (!(stream instanceof PDFRawStream)) continue;
+          
+          let contentBytes = stream.getContents();
+          let contentText = '';
+          
+          // Try to decompress if FlateDecode
+          try {
+            contentText = zlib.inflateSync(contentBytes).toString('latin1');
+          } catch (e) {
+            // If decompression fails, treat as raw
+            contentText = Buffer.from(contentBytes).toString('latin1');
+          }
+          
+          // Look for CMYK 'k' operator: pattern like "0 0 0 1 k"
+          // The key is finding the 'k' byte (0x6B) or 'K' byte (0x4B) preceded by 4 numbers/decimals
+          if (/0[\s\n]+0[\s\n]+0[\s\n]+1[\s\n]+[kK][\s\n]/.test(contentText) || 
+              /[0-9][\s\n]+[0-9][\s\n]+[0-9][\s\n]+[0-9][\s\n]+[kK][\s\n]/.test(contentText)) {
+            foundCMYK = true;
+          }
+          
+          // Look for RGB 'rg' operator: pattern like "0 0 0 rg"
+          if (/0[\s\n]+0[\s\n]+0[\s\n]+[rR][gG][\s\n]/.test(contentText)) {
+            foundRGB = true;
+          }
+        }
+      } catch (err) {
+        // Skip pages that can't be read
+      }
+    }
+
+    // If CMYK is found in any content stream, report CMYK (it's the primary color space for text/graphics)
+    // RGB in images doesn't override the color space setting
+    if (foundCMYK) return 'CMYK';
+    if (foundRGB) return 'RGB';
+    return 'UNKNOWN';
+  };
+
   for (const pdfFile of files) {
     try {
       const testName = path.basename(pdfFile, '.pdf');
       const pdfPath = path.join(__dirname, pdfFile);
       const inputPath = path.join(__dirname, testName, 'inputs.json');
+      const templatePath = path.join(__dirname, testName, 'template.json');
 
       let expectedCount = 0;
       if (fs.existsSync(inputPath)) {
@@ -19,10 +77,20 @@ const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = req
         expectedCount = Array.isArray(inputs) ? inputs.length : 1;
       }
 
+      let requestedColorSpace = 'RGB'; // Default to RGB
+      if (fs.existsSync(templatePath)) {
+        const template = JSON.parse(fs.readFileSync(templatePath, 'utf-8'));
+        if (template.dpartOptions?.colorSpace) {
+          requestedColorSpace = template.dpartOptions.colorSpace;
+        }
+      }
+
       const pdfBytes = fs.readFileSync(pdfPath);
       const pdfDoc = await PDFDocument.load(pdfBytes);
       const catalog = pdfDoc.catalog;
       const context = pdfDoc.context;
+      
+      const actualColorSpace = detectColorSpace(pdfDoc);
       
       console.log(`\n📄 Auditing: ${pdfFile}`);
       console.log('─'.repeat(60));
@@ -83,10 +151,14 @@ const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = req
       const dPartRootRef = catalog.get(PDFName.of('DPartRoot'));
       if (dPartRootRef) traverse(dPartRootRef);
 
-      // 4. Compliance Logic
+      // 4. Color Space Validation
+      const colorSpaceMatch = actualColorSpace === requestedColorSpace;
+
+      // 5. Compliance Logic
       const pdfxPass = !!(hasOI && hasOIDict && hasValidFormat && catalogHasXmpX);
       const vtPass = !!(dPartRootRef && catalogHasXmpVT && recordCount === expectedCount && recordsWithMetadata === recordCount);
-      const isPass = pdfxPass && vtPass;
+      const colorSpacePass = colorSpaceMatch;
+      const isPass = pdfxPass && vtPass && colorSpacePass;
       
       if (!isPass) allTestsPassed = false;
 
@@ -100,6 +172,11 @@ const { PDFDocument, PDFName, PDFArray, PDFDict, PDFRawStream, PDFString } = req
       console.log(`  ✓ Catalog -> Metadata (VT):    ${catalogHasXmpVT ? '✅' : '❌'}`);
       console.log(`  ✓ DPart Tree Record Count:     ${recordCount === expectedCount ? '✅' : '❌'} (${recordCount}/${expectedCount})`);
       console.log(`  ✓ Record-Level Metadata:       ${recordsWithMetadata === recordCount ? '✅' : '❌'} (${recordsWithMetadata}/${recordCount} records)`);
+
+      console.log('\nColor Space:');
+      console.log(`  ✓ Requested:                   ${requestedColorSpace}`);
+      console.log(`  ✓ Actual (detected):           ${actualColorSpace}`);
+      console.log(`  ✓ Match:                       ${colorSpacePass ? '✅' : '❌'}`);
       
       console.log(`\nCompliance: [${isPass ? '✅ FULLY COMPLIANT' : '❌ NON-COMPLIANT'}]`);
       summary.push(`${pdfFile}: ${isPass ? '✅' : '❌'}`);

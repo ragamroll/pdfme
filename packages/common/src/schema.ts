@@ -142,6 +142,7 @@ export const DPartOptions = z.object({
   enabled: z.boolean(),
   version: z.string(),
   mapping: z.record(z.string(), z.string()),
+  colorSpace: z.enum(['RGB', 'CMYK']).optional(),
   outputIntent: z.object({
     profileName: z.string(),
     registryName: z.string(),

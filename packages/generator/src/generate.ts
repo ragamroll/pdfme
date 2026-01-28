@@ -46,6 +46,12 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
   let dpartRoot: pdfLib.PDFDPart | undefined;
   console.log("DEBUG: dpartOptions in generator:", template.dpartOptions);
   const dpartOptions = template.dpartOptions;
+
+  // Convert dpartOptions.colorSpace to options.colorType for rendering
+  if (dpartOptions?.colorSpace) {
+    options.colorType = dpartOptions.colorSpace.toLowerCase() as 'rgb' | 'cmyk';
+    console.log("DEBUG: Set colorType to:", options.colorType);
+  }
   if (dpartOptions?.enabled) {
     dpartRoot = pdfDoc.catalog.getOrCreateDPart();
     // Set XMP metadata for PDF/VT and PDF/X with proper namespace compliance

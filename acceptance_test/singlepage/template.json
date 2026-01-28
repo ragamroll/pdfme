@@ -3,6 +3,7 @@
   "dpartOptions": {
     "enabled": true,
     "version": "PDF/VT-1",
+    "colorSpace": "CMYK",
     "outputIntent": {
       "subtype": "GTS_PDFX",
       "profileName": "GRACoL2006_Coated1v2",

@@ -50,7 +50,8 @@
     "build:ui": "npm run -w packages/ui build",
     "test": "npm run test --workspaces",
     "test:ui:update-snapshots": "npm run -w packages/ui test -- -u",
-    "test:vt": "npm run build && node acceptance_test/render.mjs singlepage && node acceptance_test/render.mjs postcard && node acceptance_test/render.mjs multipage && node acceptance_test/final_audit.js",
+    "build-n-test:vt": "npm run build && node acceptance_test/render.mjs singlepage && node acceptance_test/render.mjs postcard && node acceptance_test/render.mjs multipage && node acceptance_test/final_audit.js",
+    "test:vt": "node acceptance_test/render.mjs singlepage && node acceptance_test/render.mjs postcard && node acceptance_test/render.mjs multipage && node acceptance_test/final_audit.js",
     "lint": "npm run lint --workspaces",
     "prettier": "npm run prettier --workspaces",
     "prepare" : "npm run build"
