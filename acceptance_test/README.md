@@ -121,6 +121,7 @@ Defines the PDF structure:
 - `dpartOptions` - PDF/VT configuration:
   - `enabled: true` - Enable PDF/VT support
   - `version: "PDF/VT-1"` - Target version
+  - `colorSpace` - Color space for text and graphics: `"RGB"` (default) or `"CMYK"` (for professional print)
   - `outputIntent` - Color profile configuration:
     - `profileName` - Profile identifier (e.g., "GRACoL2006_Coated1v2")
     - `registryName` - Registry URL (e.g., "http://www.color.org")
@@ -158,6 +159,7 @@ A document is PDF/VT-1 compliant when:
 3. ✅ DPart nodes are created and linked to document pages
 4. ✅ DPart metadata contains correct field mappings
 5. ✅ Pages are properly grouped by record
+6. ✅ Color space matches requested configuration (if `colorSpace` specified)
 
 ### PDF/X-4 Compliance
 A document is PDF/X-4 compliant when:
@@ -202,6 +204,41 @@ For multi-page records (e.g., postcard with front/back):
 - Pages 1-2 share DPart node 1
 - Pages 3-4 share DPart node 2
 - This groups related pages together for duplex printing
+
+## Color Space Support
+
+The `colorSpace` option in `dpartOptions` controls how text and graphics are rendered:
+
+- **RGB** (default): Standard RGB color space for screen display and basic printing
+- **CMYK**: Professional CMYK color space for print production with accurate color management
+
+### Example CMYK Configuration
+```json
+{
+  "dpartOptions": {
+    "enabled": true,
+    "version": "PDF/VT-1",
+    "colorSpace": "CMYK",
+    "outputIntent": { ... }
+  }
+}
+```
+
+### How Color Space Detection Works
+
+The audit script detects which color space is actually used in the generated PDF by examining content streams:
+- **CMYK Detection**: Looks for PDF operators `k` and `K` (CMYK color operators)
+- **RGB Detection**: Looks for PDF operators `rg` and `RG` (RGB color operators)  
+- **Mixed Detection**: When embedded images (RGB/Grayscale) coexist with CMYK text/graphics
+
+The audit marks compliance as ✅ when the actual color space usage matches the requested configuration.
+
+### Note on Image Color Spaces
+
+Embedded images (photos, QR codes) may have their own color spaces (RGB, Grayscale) that don't match the requested `colorSpace`. This is expected and normal:
+- Text and vector graphics will use the requested color space (CMYK or RGB)
+- Images retain their source color space for quality preservation
+- The audit detects this as "Mixed" but still marks as compliant if text/graphics use the requested space
 
 ## Troubleshooting
 
@@ -257,6 +294,34 @@ Record Indexing:     ✅ 3 records for 3 inputs
 File Size:           24.27 KB
 Output Location:     /workspaces/pdfme/acceptance_test/singlepage.pdf
 ====================================
+
+Audit Results:
+--- Auditing: singlepage.pdf ---
+  [DEBUG] Starting exhaustive scan of 40 objects...
+  ℹ Non-CMYK Object: 15 0 R     | Pages: All Pages  | Name: /Image-7572533686 | CS: devicergb   | Type: Image
+  ℹ Non-CMYK Object: 22 0 R     | Pages: 2          | Name: /Image-1848524175 | CS: devicergb   | Type: Image
+
+Page Health Summary:
+  🟡 Page 1  : Mixed (devicergb)
+  🟢 Page 2  : Clean (CMYK)
+  🟡 Page 3  : Mixed (devicergb)
+
+PDF/X-4 (Object-Level):
+  ✓ Catalog -> OutputIntents:    ✅
+  ✓ Catalog -> Metadata (PDF/X): ✅
+
+PDF/VT-1 (Object-Level):
+  ✓ Catalog -> DPartRoot:        ✅
+  ✓ Catalog -> Metadata (VT):    ✅
+  ✓ DPart Tree Record Count:     ✅ (3/3)
+  ✓ Record-Level Metadata:       ✅ (3/3 records)
+
+Color Space:
+  ✓ Requested:                   cmyk
+  ✓ Actual (detected):           mixed (devicergb)
+  ✓ Match:                       ✅
+
+Compliance: [✅ FULLY COMPLIANT]
 
 📬 Delegating to render_postcard.mjs...
 📂 Loading files from directory...
