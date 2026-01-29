@@ -20,6 +20,9 @@ const { PDFDocument, PDFName, PDFDict, PDFRawStream } = require('@pdfme/pdf-lib'
       let nonCmykFound = false;
       const detectedSpaces = new Set();
       const pageHealthMap = new Map(); // Track health of each page
+      let dPartRootStructureValid = false;
+      let recordCount = 0;
+      let recordsWithMetadata = 0;
 
       // Initialize all pages as 'Clean'
       for (let i = 1; i <= pages.length; i++) pageHealthMap.set(i, 'Clean (CMYK)');
@@ -106,12 +109,57 @@ const { PDFDocument, PDFName, PDFDict, PDFRawStream } = require('@pdfme/pdf-lib'
         catalogHasXmpVT = metadataString.includes('GTS_PDFVT');
       }
 
-      let recordCount = 0;
-      let recordsWithMetadata = 0;
+      // Validate DPartRoot structure according to PDF/VT-1
+      // DPartRoot MUST have:
+      // 1. A /DParts array (NOT /Children - that's PDF/X-4)
+      // 2. Each element in /DParts is a reference to a DPart
+      // 3. Each DPart's /Metadata must be a stream (XMP), not an inline dictionary
+      if (dPartRootRef) {
+        const dPartRoot = context.lookup(dPartRootRef);
+        if (dPartRoot instanceof PDFDict) {
+          const dPartsRef = dPartRoot.get(PDFName.of('DParts'));
+          if (dPartsRef) {
+            const dParts = context.lookup(dPartsRef);
+            // Handle PDFArray or native array
+            const dPartsArray = Array.isArray(dParts) ? dParts : (dParts?.array ? dParts.array : null);
+            
+            if (dPartsArray && dPartsArray.length > 0) {
+              let allDPartsValid = true;
+              
+              for (let di = 0; di < dPartsArray.length; di++) {
+                const dPart = dPartsArray[di];
+                const dPartObj = context.lookup(dPart);
+                
+                if (dPartObj instanceof PDFDict) {
+                  const metadata = dPartObj.get(PDFName.of('Metadata'));
+                  if (metadata) {
+                    const metadataObj = context.lookup(metadata);
+                    // Metadata MUST be a stream (XMP), not a dictionary with inline properties
+                    if (!(metadataObj instanceof PDFRawStream)) {
+                      allDPartsValid = false;
+                      break;
+                    }
+                  }
+                  // DPart can optionally have no metadata, that's valid
+                } else {
+                  allDPartsValid = false;
+                  break;
+                }
+              }
+              
+              if (allDPartsValid) {
+                dPartRootStructureValid = true;
+                recordCount = dPartsArray.length;
+              }
+            }
+          }
+        }
+      }
+
+      // Count records with metadata at page level
       pages.forEach((page) => {
         const dPart = page.node.get(PDFName.of('DPart'));
         if (dPart) {
-          recordCount++;
           const dPartDict = context.lookup(dPart);
           if (dPartDict instanceof PDFDict && dPartDict.has(PDFName.of('Metadata'))) recordsWithMetadata++;
         }
@@ -119,14 +167,13 @@ const { PDFDocument, PDFName, PDFDict, PDFRawStream } = require('@pdfme/pdf-lib'
 
       const actualColorSpace = detectedSpaces.size > 0 ? `mixed (${Array.from(detectedSpaces).join(', ')})` : 'device-cmyk';
       const colorSpacePass = !nonCmykFound || (nonCmykFound && hasOI);
-      const isPass = !!(catalogHasXmpX && catalogHasXmpVT && dPartRootRef && colorSpacePass);
-
-      console.log('\nPDF/X-4 (Object-Level):');
+      const isPass = !!(catalogHasXmpX && catalogHasXmpVT && dPartRootRef && dPartRootStructureValid && colorSpacePass);
       console.log(`  ✓ Catalog -> OutputIntents:    ✅`);
       console.log(`  ✓ Catalog -> Metadata (PDF/X): ✅`);
       
       console.log('\nPDF/VT-1 (Object-Level):');
-      console.log(`  ✓ Catalog -> DPartRoot:        ✅`);
+      console.log(`  ✓ Catalog -> DPartRoot:        ${dPartRootStructureValid ? '✅' : '❌'}`);
+      console.log(`  ✓ DPartRoot -> /DParts Array:  ${dPartRootStructureValid ? '✅' : '❌'}`);
       console.log(`  ✓ Catalog -> Metadata (VT):    ✅`);
       console.log(`  ✓ DPart Tree Record Count:     ✅ (${recordCount}/${pages.length})`);
       console.log(`  ✓ Record-Level Metadata:       ✅ (${recordsWithMetadata}/${recordCount} records)`);
