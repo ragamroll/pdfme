@@ -34,20 +34,19 @@ const shape: Plugin<ShapeSchema> = {
   pdf: (arg) => {
     const { schema, page, options } = arg;
     if (!schema.color && !schema.borderColor) return;
-    const { colorType } = options;
     const pageHeight = page.getHeight();
     const cArg = { schema, pageHeight };
-    const { position, width, height, rotate, opacity } = convertForPdfLayoutProps(cArg);
+    const { position, width, height, rotate, opacity } = convertForPdfLayoutProps({ ...cArg, options });
     const {
       position: { x: x4Ellipse, y: y4Ellipse },
-    } = convertForPdfLayoutProps({ ...cArg, applyRotateTranslate: false });
+    } = convertForPdfLayoutProps({ ...cArg, applyRotateTranslate: false, options });
     const borderWidth = schema.borderWidth ? mm2pt(schema.borderWidth) : 0;
 
     const drawOptions = {
       rotate,
       borderWidth,
-      borderColor: hex2PrintingColor(schema.borderColor, colorType),
-      color: hex2PrintingColor(schema.color, colorType),
+      borderColor: hex2PrintingColor(schema.borderColor, options),
+      color: hex2PrintingColor(schema.color, options),
       opacity,
       borderOpacity: opacity,
     };

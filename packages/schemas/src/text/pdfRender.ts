@@ -66,16 +66,18 @@ const getFontProp = ({
   fontKitFont,
   schema,
   colorType,
+  colorSpace,
 }: {
   value: string;
   fontKitFont: FontKitFont;
   colorType?: ColorType;
+  colorSpace?: 'RGB' | 'CMYK';
   schema: TextSchema;
 }) => {
   const fontSize = schema.dynamicFontSize
     ? calculateDynamicFontSize({ textSchema: schema, fontKitFont, value })
     : (schema.fontSize ?? DEFAULT_FONT_SIZE);
-  const color = hex2PrintingColor(schema.fontColor || DEFAULT_FONT_COLOR, colorType);
+  const color = hex2PrintingColor(schema.fontColor || DEFAULT_FONT_COLOR, { colorType, colorSpace });
 
   return {
     alignment: schema.alignment ?? DEFAULT_ALIGNMENT,
@@ -117,12 +119,13 @@ export const pdfRender = async (arg: PDFRenderProps<TextSchema>) => {
     rotate,
     position: { x, y },
     opacity,
-  } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false });
+  } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false, options });
 
-  const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(schema.position.y) - height / 2 };
+  const bleedPt = options?.bleed ? mm2pt(options.bleed) : 0;
+  const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(schema.position.y) - height / 2 + bleedPt };
 
   if (schema.backgroundColor) {
-    const color = hex2PrintingColor(schema.backgroundColor, colorType);
+    const color = hex2PrintingColor(schema.backgroundColor, options);
     if (rotate.angle !== 0) {
       // Apply the same rotation logic as text rendering to match UI behavior
       const rotatedPoint = rotatePoint({ x, y }, pivotPoint, rotate.angle);

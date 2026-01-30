@@ -97,6 +97,48 @@ const { PDFDocument, PDFName, PDFDict, PDFRawStream } = require('@pdfme/pdf-lib'
         console.log(`  ${icon} Page ${String(pNum).padEnd(3)}: ${status}`);
       });
 
+      // --- Bleed and Geometry Validation ---
+      console.log('\nPage Geometry (Bleed/Trim):');
+      let bleedValid = true;
+      let hasBleed = false;
+      pages.forEach((page, index) => {
+        const pageNum = index + 1;
+        const mediaBox = page.getMediaBox();
+        const trimBox = page.getTrimBox();
+        const bleedBox = page.getBleedBox();
+        
+        const mediaWidth = mediaBox.width;
+        const mediaHeight = mediaBox.height;
+        const trimWidth = trimBox.width;
+        const trimHeight = trimBox.height;
+        const bleedWidth = bleedBox.width;
+        const bleedHeight = bleedBox.height;
+        
+        // Check if bleed is applied (MediaBox > TrimBox)
+        const pageHasBleed = mediaWidth > trimWidth || mediaHeight > trimHeight;
+        if (pageHasBleed) hasBleed = true;
+        
+        if (pageHasBleed) {
+          // Validate bleed symmetry and boxes
+          const bleedLeft = trimBox.x - mediaBox.x;
+          const bleedRight = (mediaBox.x + mediaWidth) - (trimBox.x + trimWidth);
+          const bleedTop = trimBox.y - mediaBox.y;
+          const bleedBottom = (mediaBox.y + mediaHeight) - (trimBox.y + trimHeight);
+          
+          const symmetric = Math.abs(bleedLeft - bleedRight) < 0.1 && Math.abs(bleedTop - bleedBottom) < 0.1;
+          const bleedBoxMatchesMedia = bleedWidth === mediaWidth && bleedHeight === mediaHeight;
+          
+          if (symmetric && bleedBoxMatchesMedia) {
+            console.log(`  ✅ Page ${pageNum}: Bleed applied (${bleedLeft}pt), boxes valid`);
+          } else {
+            console.log(`  ❌ Page ${pageNum}: Bleed geometry invalid (symmetric: ${symmetric}, bleedBox: ${bleedBoxMatchesMedia})`);
+            bleedValid = false;
+          }
+        } else {
+          console.log(`  ℹ Page ${pageNum}: No bleed applied`);
+        }
+      });
+
       // --- Original Structural Audits ---
       const hasOI = catalog.has(PDFName.of('OutputIntents'));
       const dPartRootRef = catalog.get(PDFName.of('DPartRoot'));
@@ -167,7 +209,7 @@ const { PDFDocument, PDFName, PDFDict, PDFRawStream } = require('@pdfme/pdf-lib'
 
       const actualColorSpace = detectedSpaces.size > 0 ? `mixed (${Array.from(detectedSpaces).join(', ')})` : 'device-cmyk';
       const colorSpacePass = !nonCmykFound || (nonCmykFound && hasOI);
-      const isPass = !!(catalogHasXmpX && catalogHasXmpVT && dPartRootRef && dPartRootStructureValid && colorSpacePass);
+      const isPass = !!(catalogHasXmpX && catalogHasXmpVT && dPartRootRef && dPartRootStructureValid && colorSpacePass && (!hasBleed || bleedValid));
       console.log(`  ✓ Catalog -> OutputIntents:    ✅`);
       console.log(`  ✓ Catalog -> Metadata (PDF/X): ✅`);
       

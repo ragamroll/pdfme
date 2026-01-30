@@ -52,6 +52,8 @@ const generate = async (props: GenerateProps): Promise<Uint8Array<ArrayBuffer>> 
     options.colorType = dpartOptions.colorSpace.toLowerCase() as 'rgb' | 'cmyk';
     console.log("DEBUG: Set colorType to:", options.colorType);
   }
+  options.colorSpace = dpartOptions?.colorSpace;
+  options.bleed = template.bleed;
   if (dpartOptions?.enabled) {
     dpartRoot = pdfDoc.catalog.getOrCreateDPart();
     // Set XMP metadata for PDF/VT and PDF/X with proper namespace compliance

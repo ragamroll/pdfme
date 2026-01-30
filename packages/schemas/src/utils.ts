@@ -7,10 +7,12 @@ export const convertForPdfLayoutProps = ({
   schema,
   pageHeight,
   applyRotateTranslate = true,
+  options,
 }: {
   schema: Schema;
   pageHeight: number;
   applyRotateTranslate?: boolean;
+  options?: any;
 }) => {
   const { width: mmWidth, height: mmHeight, position, rotate, opacity } = schema;
   const { x: mmX, y: mmY } = position;
@@ -22,12 +24,16 @@ export const convertForPdfLayoutProps = ({
   // PDF coordinate system is from bottom left, UI is top left, so we need to flip the y axis
   let y = pageHeight - mm2pt(mmY) - height;
 
+  const bleedPt = options?.bleed ? mm2pt(options.bleed) : 0;
+  x += bleedPt;
+  y += bleedPt;
+
   if (rotateDegrees && applyRotateTranslate) {
     // If rotating we must pivot around the same point as the UI performs its rotation.
     // The UI performs rotation around the objects center point (the pivot point below),
     // pdflib rotates around the bottom left corner of the object.
     // We must therefore adjust the X and Y by rotating the bottom left corner by this pivot point.
-    const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(mmY) - height / 2 };
+    const pivotPoint = { x: x + width / 2, y: pageHeight - mm2pt(mmY) - height / 2 + bleedPt };
     const rotatedPoint = rotatePoint({ x, y }, pivotPoint, rotateDegrees);
     x = rotatedPoint.x;
     y = rotatedPoint.y;
@@ -146,10 +152,11 @@ const hex2CmykColor = (hexString: string | undefined) => {
   return undefined;
 };
 
-export const hex2PrintingColor = (color?: string | Color, colorType?: ColorType) => {
+export const hex2PrintingColor = (color?: string | Color, opts?: { colorType?: ColorType, colorSpace?: 'RGB' | 'CMYK' }) => {
   // if color is already CMYK, RGB or Grayscale, does not required to convert
   if (typeof color === 'object') return color;
-  return colorType?.toLowerCase() == 'cmyk' ? hex2CmykColor(color) : hex2RgbColor(color);
+  const effectiveColorType = opts?.colorSpace === 'CMYK' ? 'cmyk' : (opts?.colorType?.toLowerCase() || 'rgb');
+  return effectiveColorType == 'cmyk' ? hex2CmykColor(color) : hex2RgbColor(color);
 };
 
 export const readFile = (input: File | FileList | null): Promise<string | ArrayBuffer> =>

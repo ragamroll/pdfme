@@ -1,5 +1,10 @@
 {
-  "basePdf": "",
+  "basePdf": {
+    "width": 210,
+    "height": 297,
+    "padding": [10, 10, 10, 10]
+  },
+  "bleed": 5,
   "dpartOptions": {
     "enabled": true,
     "version": "PDF/VT-1",

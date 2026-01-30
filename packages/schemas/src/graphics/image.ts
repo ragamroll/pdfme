@@ -3,7 +3,7 @@ import type { PDFImage } from '@pdfme/pdf-lib';
 import type { Plugin } from '@pdfme/common';
 import type { Schema } from '@pdfme/common';
 import type * as CSS from 'csstype';
-import { px2mm } from '@pdfme/common';
+import { px2mm, mm2pt } from '@pdfme/common';
 import { Image } from 'lucide';
 import {
   convertForPdfLayoutProps,
@@ -24,7 +24,7 @@ type ImageSchema = Schema;
 
 const imageSchema: Plugin<ImageSchema> = {
   pdf: async (arg) => {
-    const { value, schema, pdfDoc, page, _cache } = arg;
+    const { value, schema, pdfDoc, page, options, _cache } = arg;
     if (!value) return;
 
     const inputImageCacheKey = getCacheKey(schema, value);
@@ -55,8 +55,18 @@ const imageSchema: Plugin<ImageSchema> = {
       _schema.position.x += (boxWidth - _schema.width) / 2;
     }
 
+    // DPI validation for professional printing
+    const renderedWidthPt = mm2pt(_schema.width);
+    const renderedHeightPt = mm2pt(_schema.height);
+    const dpiWidth = (dimension.width * 72) / renderedWidthPt;
+    const dpiHeight = (dimension.height * 72) / renderedHeightPt;
+    const minDpi = Math.min(dpiWidth, dpiHeight);
+    if (minDpi < 300) {
+      console.warn(`[@pdfme/schemas] Image DPI (${minDpi.toFixed(1)}) is below the recommended 300 DPI for professional printing. Schema: ${schema.name || 'unnamed'}`);
+    }
+
     const pageHeight = page.getHeight();
-    const lProps = convertForPdfLayoutProps({ schema: _schema, pageHeight });
+    const lProps = convertForPdfLayoutProps({ schema: _schema, pageHeight, options });
     const { width, height, rotate, position, opacity } = lProps;
     const { x, y } = position;
 

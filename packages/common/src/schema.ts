@@ -156,6 +156,7 @@ export const Template = z
     basePdf: BasePdf,
     pdfmeVersion: z.string().optional(),
     dpartOptions: DPartOptions.optional(),
+    bleed: z.number().optional(),
   })
   .passthrough();
 
@@ -195,6 +196,8 @@ const CommonProps = z.object({
 
 export const GeneratorOptions = CommonOptions.extend({
   colorType: ColorType,
+  colorSpace: z.enum(['RGB', 'CMYK']).optional(),
+  bleed: z.number().optional(),
   author: z.string().optional(),
   creationDate: z.date().optional(),
   creator: z.string().optional(),

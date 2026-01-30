@@ -19,7 +19,6 @@ const lineSchema: Plugin<LineSchema> = {
   pdf: (arg) => {
     const { page, schema, options } = arg;
     if (schema.width === 0 || schema.height === 0 || !schema.color) return;
-    const { colorType } = options;
     const pageHeight = page.getHeight();
     const {
       width,
@@ -27,13 +26,13 @@ const lineSchema: Plugin<LineSchema> = {
       rotate,
       position: { x, y },
       opacity,
-    } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false });
+    } = convertForPdfLayoutProps({ schema, pageHeight, applyRotateTranslate: false, options });
     const pivot = { x: x + width / 2, y: y + height / 2 };
     page.drawLine({
       start: rotatePoint({ x, y: y + height / 2 }, pivot, rotate.angle),
       end: rotatePoint({ x: x + width, y: y + height / 2 }, pivot, rotate.angle),
       thickness: height,
-      color: hex2PrintingColor(schema.color ?? DEFAULT_LINE_COLOR, colorType),
+      color: hex2PrintingColor(schema.color ?? DEFAULT_LINE_COLOR, options),
       opacity: opacity,
     });
   },

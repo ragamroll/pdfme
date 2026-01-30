@@ -17,26 +17,31 @@ import { TOOL_NAME } from './constants.js';
 import type { EmbedPdfBox } from './types.js';
 
 export const getEmbedPdfPages = async (arg: { template: Template; pdfDoc: PDFDocument }) => {
-  const {
-    template: { schemas, basePdf },
-    pdfDoc,
-  } = arg as { template: { schemas: Schema[][]; basePdf: BasePdf }; pdfDoc: PDFDocument };
+  const { template, pdfDoc } = arg;
+  const { schemas, basePdf } = template;
   let basePages: (PDFEmbeddedPage | PDFPage)[] = [];
   let embedPdfBoxes: EmbedPdfBox[] = [];
 
   if (isBlankPdf(basePdf)) {
     const { width: _width, height: _height } = basePdf;
-    const width = mm2pt(_width);
-    const height = mm2pt(_height);
+    const trimWidth = mm2pt(_width);
+    const trimHeight = mm2pt(_height);
+    const bleed = template.bleed ? mm2pt(template.bleed) : 0;
+    const mediaWidth = trimWidth + 2 * bleed;
+    const mediaHeight = trimHeight + 2 * bleed;
     basePages = schemas.map(() => {
       const page = PDFPage.create(pdfDoc);
-      page.setSize(width, height);
+      page.setSize(mediaWidth, mediaHeight);
+      if (bleed > 0) {
+        page.setTrimBox(bleed, bleed, trimWidth, trimHeight);
+        page.setBleedBox(0, 0, mediaWidth, mediaHeight);
+      }
       return page;
     });
     embedPdfBoxes = schemas.map(() => ({
-      mediaBox: { x: 0, y: 0, width, height },
-      bleedBox: { x: 0, y: 0, width, height },
-      trimBox: { x: 0, y: 0, width, height },
+      mediaBox: { x: 0, y: 0, width: mediaWidth, height: mediaHeight },
+      bleedBox: { x: 0, y: 0, width: mediaWidth, height: mediaHeight },
+      trimBox: { x: bleed, y: bleed, width: trimWidth, height: trimHeight },
     }));
   } else {
     const willLoadPdf = await getB64BasePdf(basePdf);
